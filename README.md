@@ -78,12 +78,12 @@ Defines information about trades – settlement transactions sent to the 0x exch
   
 - JSON Example:
   
-  ```json
-  {
-    "gasLimit": 210000,
-    "gasPriceWei": 12000000000
-  }
-  ```
+    ```json
+    {
+        "gasLimit": 210000,
+        "gasPriceWei": 12000000000
+    }
+    ```
 
 ### Schema: `QuoteInfo`
 
@@ -100,14 +100,14 @@ Defines information about quote parameters for a given market.
   
 - JSON Example:
   
-  ```json
-  {
-    "minSize": 0.001,
-    "maxSize": 10,
-    "precision": 6,
-    "durationSeconds": 15,
-  }
-  ```
+    ```json
+    {
+        "minSize": 0.001,
+        "maxSize": 10,
+        "precision": 6,
+        "durationSeconds": 15
+    }
+    ```
 
 ### Schema: `Asset`
 
@@ -124,16 +124,16 @@ Defines information about an asset supported by a dealer implementation.
   | `assetData` | - | `Yes` | `string` | ABIv2 encoded asset data (including address) as used in the 0x system. |
   
 - JSON Example:
-  
-  ```json
-  {
-    "ticker": "DAI",
-    "name": "DAI Stablecoin (v1.0)",
-	"decimals": 18,
-	"assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359",
-    "
-  }
-  ```
+
+    ```json
+    {
+        "ticker": "DAI",
+        "name": "DAI Stablecoin (v1.0)",
+        "decimals": 18,
+        "networkId": 1,
+        "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+    }
+    ```
 
 ### Schema: `Market`
 
@@ -151,23 +151,59 @@ Defines a market: a trading venue that supports a base asset, and at least one q
   
 - JSON Example:
   
-  ```json
-  {	
-    "baseAssetTicker": "WETH",
-	"quoteAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
-    "tradeInfo": {
-       "gasLimit": 210000,
-       "gasPriceWei": 12000000000,
-    },
-    "quoteInfo": {
-       "minSize": 0.001,
-       "maxSize": 10,
-       "precision": 6,
-       "durationSeconds": 15,
-    },
-	"metadata": {}
-  }
-  ```
+    ```json
+    {
+        "baseAssetTicker": "WETH",
+        "quoteAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
+        "tradeInfo": {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPriceWei": 12000000000,
+        },
+        "quoteInfo": {
+            "minSize": 0.001,
+            "maxSize": 10,
+            "precision": 6,
+            "durationSeconds": 15
+        },
+        "metadata": {}
+    }
+    ```
+
+### Schema: `Quote`
+
+Defines a price quote from a dealer for a given base and quote asset, and other quote parameters.
+
+- Fields:
+  
+  | Name | Schema | Required | JSON Type | Description |
+  | :--- | :----- | :------- | :-------- | :---------- |
+  | `baseAssetTicker` | - | `Yes` | `string` | The shorthand ticker of the markets base asset. |
+  | `quoteAssetTickers` | - | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
+  | `tradeInfo` | `TradeInfo` | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
+  | `quoteInfo` | `QuoteInfo` | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
+  | `metadata` | - | `No` | `object` | Optional and implementation-specific key-value pairs for additional market metadata. |
+  
+- JSON Example:
+  
+    ```json
+    {
+        "baseAssetTicker": "WETH",
+        "quoteAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
+        "tradeInfo": {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPriceWei": 12000000000,
+        },
+        "quoteInfo": {
+            "minSize": 0.001,
+            "maxSize": 10,
+            "precision": 6,
+            "durationSeconds": 15
+        },
+        "metadata": {}
+    }
+    ```
 
 ## Methods
 
@@ -196,15 +232,20 @@ If the dealer is operating a blacklist or whitelist, this endpoint can inform th
    | :--- | :---------- | :---- |
    | `-32001` | Invalid taker address. | Returned when an address is invalid or missing. |
 
-- **Example request:**
+- **Example requests:**
 
     ```json
     {
-        "takerAddress": "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459"
+        "takerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
     }
     ```
+    ```json
+    [
+        "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
+    ]
+    ```
 
-- **Example response:**
+- **Example responses:**
 
     ```json
     {
@@ -212,14 +253,254 @@ If the dealer is operating a blacklist or whitelist, this endpoint can inform th
         "reason": "BLACKLISTED"
     }
     ```
+    ```json
+    [
+        false,
+        "BLACKLISTED"
+    ]
+    ```
 
 ### Method: `dealer_getAssets`
 
 Fetch information about currently supported ERC-20 assets.
 
+This method, with no parameters, MUST return a paginated array of all supported assets. 
+
+All parameters to this method (with the exception of `page` and `perPage`) act as filter parameters, returning only results that match all specified parameters.
+
+This method MUST return an empty array if no results match the query. Implementations MAY return an error (`-32002`) if conflicting query parameters are provided. 
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+    | `0` | `address` | String | `No` | `null` | Match only assets with this address. MUST return only one result. |
+    | `1` | `ticker` | String | `No` | `null` | Match only assets with this ticker. MUST return only one result. |
+    | `2` | `assetData` | String | `No` | `null` | Match only assets with this asset data. MUST return only one result. |
+    | `3` | `networkId` | Number | `No` | `1` | Only match assets with this network ID. |
+    | `4` | `page` | Number | `No` | `0` | See [pagination.](#pagination) |
+    | `5` | `perPage` | Number | `No` | Impl. specific | See [pagination.](#pagination) |
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `assets` | Array | `[]Asset`| The array of asset results that match the request parameters. |
+    | `1` | `items` | Number | - | The number of results that matched the request (MAY be 0). |
+    | `2` | `page` | Number | - | The page index of the result (MUST match request). |
+    | `3` | `perPage` | Number | - | The array of asset results that match the request parameters. |
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-32002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
+   | `-32003` | Invalid asset address. | Returned when an invalid Ethereum address is provided. |
+   | `-32004` | Invalid asset data. | Returned when malformed ABIv2 asset data is included in a request. |
+
+- **Example request:**
+
+    ```json
+    {
+        "page": 0,
+        "perPage": 2,
+        "networkId": 1
+    }
+    ```
+    ```json
+    [
+        null,
+        null,
+        1,
+        0,
+        2
+    ]
+    ```
+
+- **Example response:**
+
+    ```json
+    {
+        "page": 0,
+        "perPage": 2,
+        "items": 2,
+        "assets": [
+            {
+                "ticker": "DAI",
+                "name": "DAI Stablecoin (v1.0)",
+                "decimals": 18,
+                "networkId": 1,
+                "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+            },
+            {
+                "ticker": "WETH",
+                "name": "Wrapped Ether",
+                "decimals": 18,
+                "networkId": 1,
+                "assetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            },
+        ]
+    }
+    ```
+    ```json
+    [
+        [
+            {
+                "ticker": "DAI",
+                "name": "DAI Stablecoin (v1.0)",
+                "decimals": 18,
+                "networkId": 1,
+                "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+            },
+            {
+                "ticker": "WETH",
+                "name": "Wrapped Ether",
+                "decimals": 18,
+                "networkId": 1,
+                "assetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            },
+        ],
+        2,
+        0,
+        2
+    ]
+    ```
+
 ### Method: `dealer_getMarkets`
 
-Fetch information about currently supported trading pairs.
+Fetch information about currently supported [markets](#schema-market).
+
+This method, with no parameters, MUST return a paginated array of all supported markets. 
+
+All parameters to this method (with the exception of `page` and `perPage`) act as filter parameters, returning only results that match all specified parameters.
+
+This method MUST return an empty array if no results match the query. Implementations MAY return an error (`-32002`) if conflicting query parameters are provided. 
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+    | `0` | `baseAssetTicker` | String | `No` | `null` | Match only markets with this base asset. |
+    | `1` | `quoteAssetTicker` | String | `No` | `null` | Match only markets that support this quote asset ticker. |
+    | `2` | `networkId` | Number | `No` | `1` | Match only markets supporting this network. |
+    | `3` | `page` | Number | `No` | `0` | See [pagination.](#pagination) |
+    | `4` | `perPage` | Number | `No` | Impl. specific | See [pagination.](#pagination) |
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `markets` | Array | `[]Market`| The array of market results that match the request parameters. |
+    | `1` | `items` | Number | - | The number of results that matched the request (MAY be 0). |
+    | `2` | `page` | Number | - | The page index of the result (MUST match request). |
+    | `3` | `perPage` | Number | - | The array of asset results that match the request parameters. |
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-32002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
+
+- **Example request:**
+
+    ```json
+    {
+        "baseAssetTicker": "WETH",
+        "networkId": 1,
+        "page": 0,
+        "perPage": 2
+    }
+    ```
+    ```json
+    [
+        "WETH",
+        null,
+        1,
+        0,
+        2
+    ]
+    ```
+
+- **Example response:**
+
+    ```json
+    {
+        "page": 0,
+        "perPage": 2,
+        "items": 2,
+        "markets": [
+            {
+                "baseAssetTicker": "WETH",
+                "quoteAssetTickers": [ "DAI", "MKR", "ZRX" ],
+                "tradeInfo": {
+                    "networkId": 1,
+                    "gasLimit": 210000,
+                    "gasPriceWei": 12000000000,
+                },
+                "quoteInfo": {
+                    "minSize": 0.001,
+                    "maxSize": 10,
+                    "precision": 18,
+                    "durationSeconds": 15
+                }
+            },
+            {
+                "baseAssetTicker": "WETH",
+                "quoteAssetTickers": [ "USDC" ],
+                "tradeInfo": {
+                    "networkId": 1,
+                    "gasLimit": 210000,
+                    "gasPriceWei": 12000000000,
+                },
+                "quoteInfo": {
+                    "minSize": 0.001,
+                    "maxSize": 10,
+                    "precision": 6,
+                    "durationSeconds": 15
+                }
+            },
+        ]
+    }
+    ```
+    ```json
+    [
+        [
+            {
+                "baseAssetTicker": "WETH",
+                "quoteAssetTickers": [ "DAI", "MKR", "ZRX" ],
+                "tradeInfo": {
+                    "networkId": 1,
+                    "gasLimit": 210000,
+                    "gasPriceWei": 12000000000,
+                },
+                "quoteInfo": {
+                    "minSize": 0.001,
+                    "maxSize": 10,
+                    "precision": 18,
+                    "durationSeconds": 15
+                }
+            },
+            {
+                "baseAssetTicker": "WETH",
+                "quoteAssetTickers": [ "USDC" ],
+                "tradeInfo": {
+                    "networkId": 1,
+                    "gasLimit": 210000,
+                    "gasPriceWei": 12000000000,
+                },
+                "quoteInfo": {
+                    "minSize": 0.001,
+                    "maxSize": 10,
+                    "precision": 6,
+                    "durationSeconds": 15
+                }
+            },
+        ],
+        2,
+        0,
+        2
+    ]
+    ```
 
 ### Method: `dealer_fetchQuote`
 
