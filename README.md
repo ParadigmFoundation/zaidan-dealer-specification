@@ -50,7 +50,7 @@ The [quote request interface](#method-dealer-fetchquote) specified provides flex
 
 For example, an implementation may choose to support `N` assets with `N` markets, where each has a stablecoin as the only quote asset. In this scenario, consider the following request bodies (according to the parameter ordering defined below).
 
-```json
+```js
 // [ BASE, QUOTE, BASE_SIZE, QUOTE_SIZE, SIDE ]
 
 [
