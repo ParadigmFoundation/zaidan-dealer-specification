@@ -74,7 +74,7 @@ Paginated methods MUST include two additional parameters in the `params` array o
 | Index | Name | JSON Type | Required | Default | Description |
 | :---- | :--- | :-------- | :------- | :------ | :---------- |
 | `n - 2` | `page` | `number` | `No` | `0` | The page number of the paginated results, where there are `perPage` items on each page. Must have a default value of `0` (the first page). |
-| `n - 1` | `perPage` | `number` | `No` | Implementation specific | The number of items to include on each page (used by the server to calculate which results to include). |
+| `n - 1` | `perPage` | `number` | `No` | Impl. specific | The number of items to include on each page (used by the server to calculate which results to include). |
 
 ## Errors
 
