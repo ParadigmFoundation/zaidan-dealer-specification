@@ -734,6 +734,49 @@ Fetch an order-only object, provided a known (valid) quote UUID.
 
 Can be used alongside the `fetchQuote` and `fetchSwapQuote` methods with a `priceOnly` filter for a 2-step quote process.
 
+This method MUST support executing the signed fill transaction from the client, according to [ZEIP-18.](https://github.com/0xProject/ZEIPs/issues/18)
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `quoteId`  | String | [UUID](#schema-uuid) | A UUID (v4) that MUST correspond to this offer only. |
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-42012` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
+   | `-42013` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
+   | `-42014` | Already filled. | Available to allow implementations to indicate specific double-fill attempts. |
+   | `-42015` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
+   | `-42016` | Insufficient taker balance. | Available to indicate specific validation failure. |
+   | `-42017` | Insufficient taker allowance. | Available to indicate specific validation failure. |
+   | `-42018` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data.
+
+
+- **Example request bodies:**
+
+    ```json
+    {}
+    ```
+    ```json
+    []
+    ```
+
+- **Example response bodies:**
+
+    ```json
+    {}
+    ```
+    ```json
+    []
+    ```
 
 ### Method: `dealer_getQuoteById`
 
@@ -749,3 +792,36 @@ Useful for operational flows where a client requests several price-only quotes, 
 1. Quote sizes and prices within quotes when represented using an asset's user representation MUST use the level of precision specified in the corresponding market.
 1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `priceOnly` can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
 
+## Error codes
+
+A table of all specified error codes, which MAY be used in methods other than where they are specified, if applicable.
+
+
+
+| Code | Description | Notes |
+| :--- | :---------- | :---- |
+| `-32700` | Parse error. | Invalid JSON was received by the server. MUST be implemented. |
+| `-32600` | Invalid request. | The JSON sent is not a valid request object (see JSONRPC spec). MUST be implemented. |
+| `-32601` | Method not found. | The method does not exist or is not available. |
+| `-32602` | Invalid parameters. | Invalid method parameters. MAY be omitted in favor of more specific codes. |
+| `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
+| `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
+| `-42003` | Invalid address. | Returned when an invalid Ethereum address is provided. |
+| `-42004` | Invalid asset data. | Returned when malformed ABIv2 asset data is included in a request. |
+| `-42005` | Two size requests. | Occurs when a client specifies `baseAssetSize` and `quoteAssetSize`. |
+| `-42006` | Size too precise. | Occurs when a client requests a quote size with too many decimals. |
+| `-42007` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
+| `-42008` | Invalid side. | Available for implementations to indicate |
+| `-42008` | Temporary restriction. | Available for implementations to indicate taker-specific temporary restrictions. |
+| `-42008` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
+| `-42009` | Unsupported quote asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
+| `-42009` | Quote too large. | Occurs when a quote would exceed the market maximum or the dealer's balance. |
+| `-42010` | Quote too small. | Occurs when a quote would be smaller than the market's minimum size. |
+| `-42011` | Quote unavailable at this time. | Reserved for various states where dealers may not be serving quotes. |
+| `-42012` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
+| `-42013` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
+| `-42014` | Order already filled. | Available to allow implementations to indicate specific double-fill attempts. |
+| `-42015` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
+| `-42016` | Insufficient taker balance. | Available to indicate specific validation failure. |
+| `-42017` | Insufficient taker allowance. | Available to indicate specific validation failure. |
+| `-42018` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
