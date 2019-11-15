@@ -11,7 +11,33 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
 - The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/rfc/rfc2119.txt).
 - The word "implementation" is used to refer to any system that implements or provides the Dealer JSONRPC.
 
-## Adherence requirements
+## Contents
+
+- [Requirements](#requirements)
+- [Encoding](#encoding)
+- [Quotes](#quotes)
+- [Pagination](#pagination)
+- [Errors](#errors)
+- [Schemas](#schemas)
+    - [Ticker](#schema-ticker)
+    - [Time](#schema-time)
+    - [Side](#schema-side)
+    - [UUID](#schema-uuid)
+    - [TradeInfo](#schema-tradeinfo)
+    - [QuoteInfo](#schema-quoteinfo)
+    - [Asset](#schema-asset)
+    - [Market](#schema-market)
+    - [Quote](#schema-quote)
+- [Methods](#methods)
+    - [AuthStatus](#method-dealer-authstatus)
+    - [GetAssets](#method-dealer-getassets)
+    - [GetMarkets](#method-dealer-getmarkets)
+    - [GetQuote](#method-dealer-getquote)
+    - [SubmitFill](#method-dealer-submitfill)
+- [Error codes](#error-codes)
+- [Appendix](#appendix)
+
+## Requirements
 
 In addition to notices in each section, each of the following must be true in order for an implementation to be considered in adherence with the specification.
 
@@ -37,9 +63,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 - Implementations MAY choose to offer "arbitrary swap" functionality (e.g. Uniswap) or conventional bid/ask quotes only.
 	- The specification permits markets to specify multiple quote assets, and a single base asset, which SHOULD be leveraged to implement swap functionality.
 
-
-
-## Encoding notes
+## Encoding
 - Unless otherwise specified, values MUST use their equivalent JSON types (as shown in the examples).
 - Binary data (EVM `bytes`, etc.) MUST be encoded as `0x`-prefixed all-lowercase hex-encoded strings in the JSONRPC. 
 - Ethereum addresses MUST be encoded as all other binary data (`0x`-prefix, all lowercase, no EIP-55 checksum).
@@ -201,7 +225,7 @@ Defines information about an asset supported by a dealer implementation.
   
   | Name | Schema | Required | JSON Type | Description |
   | :--- | :----- | :------- | :-------- | :---------- |
-  | `ticker` | - | `Yes` |  `string` | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
+  | `ticker` | Ticker | `Yes` |  `string` | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
   | `name` | - | `Yes` | `string` | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
   | `decimals` | - | `Yes` | `number` | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20). |
   | `networkId` | - | `Yes` | `number` | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).|
@@ -227,10 +251,10 @@ Defines a market: a trading venue that supports a base asset, and at least one q
   
   | Name | Schema | Required | JSON Type | Description |
   | :--- | :----- | :------- | :-------- | :---------- |
-  | `baseAssetTicker` | - | `Yes` | `string` | The shorthand ticker of the markets base asset. |
-  | `quoteAssetTickers` | - | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
-  | `tradeInfo` | `TradeInfo` | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
-  | `quoteInfo` | `QuoteInfo` | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
+  | `baseAssetTicker` | Ticker | `Yes` | `string` | The shorthand ticker of the markets base asset. |
+  | `quoteAssetTickers` | Ticker[] | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
+  | `tradeInfo` | TradeInfo | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
+  | `quoteInfo` | QuoteInfo | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
   | `metadata` | - | `No` | `object` | Optional and implementation-specific key-value pairs for additional market metadata. |
   
 - JSON Example:
@@ -264,8 +288,8 @@ Defines a price quote from a dealer for a given base and quote asset, and other 
   | :--- | :----- | :------- | :-------- | :---------- |
   | `baseAssetTicker` | - | `Yes` | `string` | The shorthand ticker of the markets base asset. |
   | `quoteAssetTickers` | - | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
-  | `tradeInfo` | `TradeInfo` | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
-  | `quoteInfo` | `QuoteInfo` | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
+  | `tradeInfo` | TradeInfo | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
+  | `quoteInfo` | QuoteInfo | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
   | `metadata` | - | `No` | `object` | Optional and implementation-specific key-value pairs for additional market metadata. |
   
 - JSON Example:
@@ -777,12 +801,6 @@ This method MUST support executing the signed fill transaction from the client, 
     ```json
     []
     ```
-
-### Method: `dealer_getQuoteById`
-
-Fetch a quote and signed order given a (valid) previously provided quote UUID.
-
-Useful for operational flows where a client requests several price-only quotes, then chooses one to request a fill for.
 
 ## Appendix
 
