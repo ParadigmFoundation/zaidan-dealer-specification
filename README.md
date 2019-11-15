@@ -609,6 +609,7 @@ Clients MUST leave at least one size field (either `baseAssetSize` or `quoteAsse
     | `4` | `side` | String | `Yes` | - | Specify if the client wants to buy (`"B"`) or sell (`"S"`) the base asset. |
     | `5` | `takerAddress` | String | `No` | (3) | The address of the taker that will fill the requested quote (see 3). |
     | `6` | `priceOnly` | Boolean | `No` | `false` | If `false`, the quote MUST include a signed 0x order for the offer (5). |
+    | `7` | `extra` | Object | `No` | `null` | Optional extra structured data. MAY be omitted by implementations.
 
 - **Response fields:**
 
