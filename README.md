@@ -54,7 +54,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 - Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical WETH contract for the active network.
 - Implementations MAY require that quote requests include the potential taker's address.
 	- The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
-	- Implementations MAY record and use the address provided by the taker to alter prices or refuse to provide quotes.
+	- Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
 - Implementations MAY use arrays or objects for return values and parameters (in accordance with the JSONRPC specification).
 	- If arrays are used, the index specified in each method MUST match the implementation.
 	- If objects are used, the keys MUST match the name specified for each parameter.
