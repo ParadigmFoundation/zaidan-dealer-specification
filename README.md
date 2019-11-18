@@ -31,12 +31,12 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
     - [Market](#schema-market)
     - [Quote](#schema-quote)
 - [Methods](#methods)
-    - [AuthStatus](#method-dealer-authstatus)
-    - [GetAssets](#method-dealer-getassets)
-    - [GetMarkets](#method-dealer-getmarkets)
-    - [GetQuote](#method-dealer-getquote)
-    - [SubmitFill](#method-dealer-submitfill)
-    - [Time](#method-dealer-time)
+    - [AuthStatus](#method-dealer_authstatus)
+    - [GetAssets](#method-dealer_getassets)
+    - [GetMarkets](#method-dealer_getmarkets)
+    - [GetQuote](#method-dealer_getquote)
+    - [SubmitFill](#method-dealer_submitfill)
+    - [Time](#method-dealer_time)
 - [Appendix](#appendix)
     - [Notes](#notes)
     - [Important resources](#important-resources)
@@ -669,7 +669,7 @@ This method MUST return an empty array if no results match the query. Implementa
     ]
     ```
 
-### Method: `dealer_fetchQuote`
+### Method: `dealer_getQuote`
 
 Primary method for requesting a quote from the dealer. Be sure to see the [quotes section.](#quotes)
 
