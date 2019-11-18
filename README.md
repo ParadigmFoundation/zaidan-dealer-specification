@@ -727,14 +727,15 @@ All other fields can be dynamically populated from 0x event logs based on a know
     | `3`   | `perPage` | Number    | -             | The array of asset results that match the request parameters.          |
 
 -   **Errors:**
-    | Code | Description | Notes |
+
+    | Code     | Description               | Notes                                                                             |
     | :------- | :------------------------ | :-------------------------------------------------------------------------------- |
-    | `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
-    | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
-    | `-42003` | Invalid address. | Returned when an invalid Ethereum address is provided. |
-    | `-42021` | Invalid transaction ID. | Available to indicate an invalid transaction hash in a request. |
-    | `-42022` | Invalid order hash. | Available to indicate an order transaction hash in a request. |
-    | `-42023` | Invalid UUID. | Available to indicate failure to validate a universally unique identifier (UUID). |
+    | `-32603` | Internal error.           | Internal JSON-RPC error. MAY be used as generic internal error code.              |
+    | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested.                  |
+    | `-42003` | Invalid address.          | Returned when an invalid Ethereum address is provided.                            |
+    | `-42021` | Invalid transaction ID.   | Available to indicate an invalid transaction hash in a request.                   |
+    | `-42022` | Invalid order hash.       | Available to indicate an order transaction hash in a request.                     |
+    | `-42023` | Invalid UUID.             | Available to indicate failure to validate a universally unique identifier (UUID). |
 
 *   **Example request bodies:**
 
@@ -969,16 +970,17 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | `4`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.                                                                                                   |
 
 -   **Errors:**
-    | Code | Description | Notes |
+
+    | Code     | Description                   | Notes                                                                                             |
     | :------- | :---------------------------- | :------------------------------------------------------------------------------------------------ |
-    | `-42014` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
-    | `-42015` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
-    | `-42016` | Already filled. | Available to allow implementations to indicate specific double-fill attempts. |
-    | `-42017` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
-    | `-42018` | Insufficient taker balance. | Available to indicate specific validation failure. |
-    | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure. |
-    | `-42020` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
-    | `-42023` | Invalid UUID. | Available to indicate failure to validate a universally unique identifier (UUID). |
+    | `-42014` | Quote expired.                | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
+    | `-42015` | Unknown quote.                | Available to allow implementations differentiate expired from never-quoted.                       |
+    | `-42016` | Already filled.               | Available to allow implementations to indicate specific double-fill attempts.                     |
+    | `-42017` | Fill validation failed.       | Available to indicate current chain state simulation validation failure.                          |
+    | `-42018` | Insufficient taker balance.   | Available to indicate specific validation failure.                                                |
+    | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure.                                                |
+    | `-42020` | Quote validation failure.     | Available to indicate implementation-specific failures of extra quote data.                       |
+    | `-42023` | Invalid UUID.                 | Available to indicate failure to validate a universally unique identifier (UUID).                 |
 
 *   **Example request bodies:**
 
@@ -1038,7 +1040,8 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     | `1`   | `diff` | Number    | -                    | The difference between the dealer time and the client time. ONLY if `clientTime` in request. |
 
 -   **Errors:**
-    | Code | Description | Notes |
+
+    | Code     | Description     | Notes                                                                |
     | :------- | :-------------- | :------------------------------------------------------------------- |
     | `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
 
