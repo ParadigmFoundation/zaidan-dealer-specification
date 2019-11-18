@@ -10,6 +10,8 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
 
 - The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/rfc/rfc2119.txt).
 - The word "implementation" is used to refer to any system that implements or provides the Dealer JSONRPC.
+- In accordance with the JSONRPC 2.0 spec, JSON types (String, Number, Object, and Array) are capitalized to differentiate between usage of the word and the JSON type.
+- The syntax "Array\<T>" is used to indicate an Array of type T (for JSON values) or an Array of schema T.
 
 ## Contents
 
@@ -34,8 +36,10 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
     - [GetMarkets](#method-dealer-getmarkets)
     - [GetQuote](#method-dealer-getquote)
     - [SubmitFill](#method-dealer-submitfill)
-- [Error codes](#error-codes)
 - [Appendix](#appendix)
+    - [Notes](#notes)
+    - [Important resources](#important-resources)
+    - [Error codes](#error-codes)
 
 ## Requirements
 
@@ -47,62 +51,70 @@ These requirements are intended to motivate strong guarantees of compatibility b
 - All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
 - Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network (not yet deployed).
 - Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
-- Implementations MUST use arbitrary precision representations for integers.
+- Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
+- Implementations MUST NOT use floating points anywhere in the public API, with the exception of UNIX timestamps.
 - Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
-- Floating point numbers SHOULD be of fixed precision according to the precision of the parent market, if used at all.
-- Pricing calculations SHOULD take place with the integer base unit representations of supported assets, and be represented as decimals only in the public API.
-- Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical WETH contract for the active network.
+- Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
 - Implementations MAY require that quote requests include the potential taker's address.
 	- The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
 	- Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
-- Implementations MAY use arrays or objects for return values and parameters (in accordance with the JSONRPC specification).
+- Implementations MAY use Arrays or Objects for return values and parameters (in accordance with the JSONRPC specification).
 	- If arrays are used, the index specified in each method MUST match the implementation.
 	- If objects are used, the keys MUST match the name specified for each parameter.
-- Markets between assets with differing base unit representations MUST use a precision less than or equal to the number of decimals in the less-precise asset.
-    - For example a DAI/USDC market MUST use 6 or less decimal places of precision.
-- Implementations MAY choose to offer "arbitrary swap" functionality (e.g. Uniswap) or conventional bid/ask quotes only.
-	- The specification permits markets to specify multiple quote assets, and a single base asset, which SHOULD be leveraged to implement swap functionality.
 
 ## Encoding
-- Unless otherwise specified, values MUST use their equivalent JSON types (as shown in the examples).
+- All asset amount values MUST be integer values (as Numbers) in their base units.
 - Binary data (EVM `bytes`, etc.) MUST be encoded as `0x`-prefixed all-lowercase hex-encoded strings in the JSONRPC. 
 - Ethereum addresses MUST be encoded as all other binary data (`0x`-prefix, all lowercase, no EIP-55 checksum).
+- Unless otherwise specified, values MUST use their equivalent JSON types (as shown in the examples).
 
 ## Quotes
 
-The [quote request interface](#method-dealer-fetchquote) specified provides flexibility for a wide array of market and pricing implementations.
+Dealer implementations use the [0x contract system](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md) for asset settlement, and as such, the trading interface provided by the Dealer API is designed to foster helpful abstractions over the underlying settlement system. 
 
-For example, an implementation may choose to support `N` assets with `N` markets, where each has a stablecoin as the only quote asset. In this scenario, consider the following request bodies (according to the parameter ordering defined below).
+For this reason, instead of providing a currency pair (base/quote and price denominated markets) interface for quote requests,
+traders are able to specify the `makerAsset`, `takerAsset`, and one of either `makerAssetSize` or `takerAssetSize` (the other provided by the dealer as the quote). Price can then be calculated in terms of either asset at higher levels depending on the use case. Similarly, all asset sizes included in requests and responses from the dealer MUST be in integer base units.
+
+Because there is no concept of a base or quote asset, quotes include no notion of price. Instead allowing clients to calculate the price in terms of either asset.
+
+Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. Consider the following requests.
 
 ```js
-// [ BASE, QUOTE, BASE_SIZE, QUOTE_SIZE, SIDE ]
+// [ MAKER_ASSET, TAKER_ASSET, MAKER_ASSET_SIZE, TAKER_ASSET_SIZE ]
 
-[
-    ["ZRX", "DAI", 1000, null, "B"],
-    ["ZRX", "DAI", null, 500, "B"],
-    ["DAI", "ZRX", 500, null, "S"],
-    ["DAI", "ZRX", null, 1000, "S"]
-]
+[ "DAI", "ZRX", null, 100000000000000000000 ]   // 1
+[ "ZRX", "DAI", 100000000000000000000, null ]   // 2
+[ "ZRX", "DAI", null, 10000000000000000000 ]    // 3
+[ "DAI", "ZRX", 10000000000000000000, null ]    // 4
 ```
-If an implementation chooses to only support conventional buys and sells on currency-pair markets (e.g. WETH/DAI), only the first request would be valid – where the quote is provided in the quote asset, requested by the trader in units of the base.
 
-However, an implementation MAY choose to support all possible request formats. Such implementations are considered "arbitrary swap" marketplaces. The desire to offer flexibility for implementers and traders motivates the quote request format outlined in the [methods](#method-dealer-fetchquote) section, and the [market user representation](#schema-market) specified in the schemas section.
-
+1. Client requests to swap 100 ZRX for DAI (receiving the DAI, sending the ZRX)
+    - If the market's quote asset is **DAI** this is a request to **sell ZRX** to the dealer.
+    - If the market's quote asset is **ZRX** this is a request to **buy DAI** from the dealer.
+1. Client requests to swap 100 ZRX for DAI (receiving the ZRX, sending the DAI)
+    - If the market's quote asset is **DAI** this is a request to **buy ZRX** from the dealer.
+    - If the market's quote asset is **ZRX** this is a request to **sell DAI** to the dealer.
+1. Client requests to swap 10 DAI for ZRX (receiving the ZRX, sending the DAI)
+    - If the market's quote asset is **DAI** this is a request to **buy ZRX** to the dealer.
+    - If the market's quote asset is **ZRX** this is a request to **sell DAI** to the dealer.
+1. Client requests to swap 10 DAI for ZRX (receiving the DAI, sending the ZRX)
+    - If the market's quote asset is **DAI** this is a request to **sell ZRX** to the dealer.
+    - If the market's quote asset is **ZRX** this is a request to **buy DAI** from the dealer.
 
 ## Pagination
 
-Paginated methods MUST implement pagination in accordance with this section.
+Paginated methods MUST implement pagination in accordance with this section. If `page` is not specified, the default MUST be 0. The value for `perPage` MAY be implementation specific.
 
 Paginated methods MUST include two additional parameters in the `params` array or object (where `n` is the number of parameters the method accepts):
 
 | Index | Name | JSON Type | Required | Default | Description |
 | :---- | :--- | :-------- | :------- | :------ | :---------- |
-| `n - 2` | `page` | `number` | `No` | `0` | The page number of the paginated results, where there are `perPage` items on each page. Must have a default value of `0` (the first page). |
+| `n - 2` | `page` | `number` | `No` | `0` | The page number of the paginated results, where there are `perPage` items on each page. |
 | `n - 1` | `perPage` | `number` | `No` | Impl. specific | The number of items to include on each page (used by the server to calculate which results to include). |
 
 ## Errors
 
-Implementations MUST support the reserved error codes specified in [the JSONRPC 2.0](https://www.jsonrpc.org/specification#error_object) specification, in addition to any method-specific errors. 
+Implementations MUST support the reserved error codes specified in [the JSONRPC 2.0](https://www.jsonrpc.org/specification#error_object) specification, in addition to any method-specific errors. Be sure to see the [error codes](#error-codes) appendix.
 
 Implementations MAY omit specific error codes (in the `-42000` range) entirely, but MUST support the ones specified by JSONRPC if no specific codes are provided.
 
@@ -126,6 +138,8 @@ An asset's shorthand String representation.
 
 No limitation is placed on tickers by the specification, but implementations SHOULD keep an asset's `Ticker` consistent with established conventions for that asset on it's corresponding network (e.g. DAI, WETH, etc.).
 
+This value SHOULD come from the [ERC-20 `symbol`](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md#symbol) method if implemented and logical for each supported asset.
+
 - **JSON Example:**
 
     ```json
@@ -134,7 +148,7 @@ No limitation is placed on tickers by the specification, but implementations SHO
 
 ### Schema: `Time`
 
-All times are specified in seconds since the UNIX epoch.
+All times are specified in seconds since the UNIX epoch as a Number.
 
 Implementations MAY choose the level of time precision (decimals), which MUST be consistent across the public API.
 
@@ -146,26 +160,9 @@ If an implementation provides sub-second precision for timing, the decimal place
     1573774183.1353
     ```
 
-### Schema: `Side`
-
-Either the character `B` or `S` as an uppercase string.
-
-Implementations MUST accept only the value `"B"` or `"S"` where the value applies ONLY to the corresponding description of each in the table below.
-
-| Side | Value | JSON Type | Description |
-| :--- | :---- | :-------- | :---------- |
-| Buy | `B` | String | MUST indicate the client buying an amount of a market's base asset for an amount of a quote asset. |
-| Sell | `S` | String | MUST indicate the client selling an amount of a market's base asset for an amount of a quote asset. |
-
-- **JSON Example:**
-
-    ```json
-    "B"
-    ```
-
 ### Schema: `UUID`
 
-A universally unique identifier (UUID), according to UUID version 4.0.
+A universally unique identifier (UUID), according to UUID version 4.0 as a String.
 
 - **JSON Example:**
     
@@ -177,43 +174,71 @@ A universally unique identifier (UUID), according to UUID version 4.0.
 
 Defines information about trades – settlement transactions sent to the 0x exchange contract.
 
-- Fields:
+Implementations MAY included implementation-specific fields in this section.
+
+The value for `gasPrice` MUST match the value ultimately included in any 0x [fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) by dealer implementations for a given market.
+
+- **Fields**:
   
   | Name | Schema | JSON Type | Description |
   | :--- | :----- | :-------- | :---------- |
-  | `gasLimit` | - | `number` | The gas limit that will be used in `fillOrder` transactions submitted by the dealer. |
-  | `gasPriceWei` | - | `number` | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
+  | `gasLimit` | - | Number | The gas limit that will be used in `fillOrder` transactions submitted by the dealer. |
+  | `gasPrice` | - | Number | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
   
-- JSON Example:
+- **JSON Example**:
   
     ```json
     {
         "gasLimit": 210000,
-        "gasPriceWei": 12000000000
+        "gasPrice": 12000000000
     }
     ```
 
 ### Schema: `QuoteInfo`
 
-Defines information about quote parameters for a given market.
+Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) for individual quotes.
+
+- **Fields**:
+  
+  | Name | Schema | JSON Type | Description |
+  | :--- | :----- | :-------- | :---------- |
+  | `minSize` | - | `number` | The minimum supported trade size, in base units of a market's maker asset. |
+  | `maxSize` | - | `number` | The maximum supported trade size, in base units of a market's maker asset. |
+  | `durationSeconds` | - | `number` | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
+  
+- **JSON Example**:
+  
+    ```json
+    {
+        "minSize": 100000000000000,
+        "maxSize": 10000000000000000000000000,
+        "durationSeconds": 15
+    }
+    ```
+
+### Schema: `ValidityParameter`
+
+An implementation-specific quote validation parameter used to enforce "soft cancels" (rejection to fill quotes).
+
+These parameters are NOT cryptographically enforced, and MAY be used by implementations to enforce custom "soft" cancellation parameters.
+
+Implementations MAY provide additional fields in this schema (such as a link to a price feed, etc.).
 
 - Fields:
   
   | Name | Schema | JSON Type | Description |
   | :--- | :----- | :-------- | :---------- |
-  | `minSize` | - | `number` | The minimum supported trade size, in units of a market's base asset. |
-  | `maxSize` | - | `number` | The maximum supported trade size, in units of a market's base asset. |
-  | `precision` | - | `number` | The "precision" of the market refers to the number of decimal places accounted for in prices and trade sizes. |
-  | `durationSeconds` | - | `number` | The validity duration of qutoes for the market in seconds (`0` indicating no expiration). |
-  
-- JSON Example:
-  
+  | `name` | - | Number | The name of the validation parameter. |
+  | `value` | - | Any | The enforced value (MAY be primitive or structured). |
+
+- **JSON Example**:
+
+    This example may indicate to a trader that the dealer will only fill the quote if the ETH/USD price on Coinbase is above 176.25 USD.
+
     ```json
     {
-        "minSize": 0.001,
-        "maxSize": 10,
-        "precision": 6,
-        "durationSeconds": 15
+        "name": "cb-eth-usd-price-above",
+        "value": 176.25
     }
     ```
 
@@ -225,11 +250,11 @@ Defines information about an asset supported by a dealer implementation.
   
   | Name | Schema | Required | JSON Type | Description |
   | :--- | :----- | :------- | :-------- | :---------- |
-  | `ticker` | Ticker | `Yes` |  `string` | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
-  | `name` | - | `Yes` | `string` | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
-  | `decimals` | - | `Yes` | `number` | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20). |
-  | `networkId` | - | `Yes` | `number` | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).|
-  | `assetData` | - | `Yes` | `string` | ABIv2 encoded asset data (including address) as used in the 0x system. |
+  | `ticker` | Ticker | `Yes` |  String | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
+  | `name` | - | `Yes` | String | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract. |
+  | `decimals` | - | `Yes` | Number | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)). |
+  | `networkId` | - | `Yes` | Number | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).|
+  | `assetData` | - | `Yes` | String | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
   
 - JSON Example:
 
@@ -245,33 +270,38 @@ Defines information about an asset supported by a dealer implementation.
 
 ### Schema: `Market`
 
-Defines a market: a trading venue that supports a base asset, and at least one quote asset (1).
+Defines a market: a trading venue that supports a maker asset (provided by the dealer) and at least one taker asset (provided by the trader).
+
+The concept of a base and quote asset are intentionally omitted, and left for definition at higher levels based on the trading and market scenario.
+
+Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as shown in the example are OPTIONAL).
 
 - Fields:
   
   | Name | Schema | Required | JSON Type | Description |
   | :--- | :----- | :------- | :-------- | :---------- |
-  | `baseAssetTicker` | Ticker | `Yes` | `string` | The shorthand ticker of the markets base asset. |
-  | `quoteAssetTickers` | Ticker[] | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
-  | `tradeInfo` | TradeInfo | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
-  | `quoteInfo` | QuoteInfo | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
-  | `metadata` | - | `No` | `object` | Optional and implementation-specific key-value pairs for additional market metadata. |
+  | `marketId` | - | Yes | String | An implementation-specific market ID string. MUST be unique for each market. |
+  | `makerAssetTicker` | Ticker | `Yes` | String | The shorthand ticker of the markets maker asset (provided by the dealer). |
+  | `takerAssetTickers` | Ticker[] | `Yes` | Array | An array of shorthand tickers for which quote assets are supported. |
+  | `tradeInfo` | TradeInfo | `Yes` | Object | Information about trade settlement and execution for this market (gas price, etc.). |
+  | `quoteInfo` | QuoteInfo | `Yes` | Object | Information about quotes provided on this market (max/min size, etc.). |
+  | `metadata` | - | `No` | Object | Optional and implementation-specific key-value pairs for additional market metadata. |
   
 - JSON Example:
   
     ```json
     {
-        "baseAssetTicker": "WETH",
-        "quoteAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
+        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+        "makerAssetTicker": "WETH",
+        "takerAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
         "tradeInfo": {
             "networkId": 1,
             "gasLimit": 210000,
-            "gasPriceWei": 12000000000,
+            "gasPrice": 12000000000,
         },
         "quoteInfo": {
-            "minSize": 0.001,
-            "maxSize": 10,
-            "precision": 6,
+            "minSize": 100000000000000,
+            "maxSize": 10000000000000000000000000,
             "durationSeconds": 15
         },
         "metadata": {}
@@ -280,36 +310,60 @@ Defines a market: a trading venue that supports a base asset, and at least one q
 
 ### Schema: `Quote`
 
-Defines a price quote from a dealer for a given base and quote asset, and other quote parameters.
+Defines a price quote from a dealer for a given maker and taker asset, and other quote parameters.
+
+Implementations MAY use the `validityParameters` field to specify custom "soft cancel" parameters for served quotes.
 
 - Fields:
   
-  | Name | Schema | Required | JSON Type | Description |
-  | :--- | :----- | :------- | :-------- | :---------- |
-  | `baseAssetTicker` | - | `Yes` | `string` | The shorthand ticker of the markets base asset. |
-  | `quoteAssetTickers` | - | `Yes` | `string[]` | An array of shorthand tickers for which quote assets are supported.
-  | `tradeInfo` | TradeInfo | `Yes` | `object` | Information about trade settlement and execution for this market (gas price, etc.). |
-  | `quoteInfo` | QuoteInfo | `Yes` | `object` | Information about quotes provided on this market (max/min size, precision, etc.). |
-  | `metadata` | - | `No` | `object` | Optional and implementation-specific key-value pairs for additional market metadata. |
+    | Name | Schema | Required | JSON Type | Description |
+    | :--- | :----- | :------- | :-------- | :---------- |
+    | `quoteId`  | [UUID](#schema-uuid) | `Yes` | String | A UUID (v4) that MUST correspond to this offer only. | 
+    | `makerAssetTicker` | [Ticker](#schema-ticker) | `Yes` | String | Shorthand ticker of the quote's maker asset (see [quotes](#quotes)). |
+    | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes` | String | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)). |
+    `makerAssetSize` | - | `Yes` | Number | The quote's maker asset size provided by the dealer (see [quotes](#quotes)). |
+    | `quoteAssetSize` | - | `Yes` | Number | The quote's taker asset size required by the client (see [quotes](#quotes)). |
+    | `expiration` | [Time](#schema-time)  | `Yes` | Number | The UNIX timestamp after which the quote will be rejected for settlement. |
+    | `orderHash` | - | `No` | String | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).
+    | `order` | [Order](#schema-order)  | `No` | Object | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer. |
+    | `fillTx` | - | `No` | String | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
+    | `validityParameters` | Array\<ValidityParameter> | `No` | Array | OPTIONAL implementation-specific "soft-cancel" parameters for this offer. |
   
 - JSON Example:
   
     ```json
     {
-        "baseAssetTicker": "WETH",
-        "quoteAssetTickers": [ "DAI", "USDC", "MKR", "ZRX" ],
-        "tradeInfo": {
-            "networkId": 1,
-            "gasLimit": 210000,
-            "gasPriceWei": 12000000000,
+        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "makerAssetTicker": "ZRX",
+        "takerAssetTicker": "WETH",
+        "makerAssetSize": 100000000000000000000,
+        "takerAssetSize": 300000000000000000,
+        "expiration": 1573775025,
+        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+        "order": {
+            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+            "feeRecipientAddress": "0x",
+            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "makerAssetAmount": "100000000000000000000",
+            "takerAssetAmount": "300000000000000000",
+            "makerFee": "0",
+            "takerFee": "0",
+            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+            "expirationTimeSeconds": "1573790025",
+            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+            "salt": "1572620203025",
+            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "makerFeeAssetData": "0x",
+            "takerFeeAssetData": "0x"
         },
-        "quoteInfo": {
-            "minSize": 0.001,
-            "maxSize": 10,
-            "precision": 6,
-            "durationSeconds": 15
-        },
-        "metadata": {}
+        "validityParameters": [
+            {
+                "name": "coinbase-pro-eth-usd-above",
+                "value": 178.88
+            }
+        ]
     }
     ```
 
@@ -372,7 +426,7 @@ Implementation MAY use arbitrary mechanisms to determine a taker's authorization
 
 ### Method: `dealer_getAssets`
 
-Fetch information about currently supported ERC-20 assets.
+Fetch information about currently supported ERC-20 assets, and optionally filter with query parameters.
 
 This method, with no parameters, MUST return a paginated array of all supported assets. 
 
@@ -395,10 +449,10 @@ This method MUST return an empty array if no results match the query. Implementa
 
     | Index | Name | JSON Type | Schema | Description |
     | :---- | :--- | :-------- | :----- | :---------- |
-    | `0` | `assets` | Array | `[]Asset`| The array of asset results that match the request parameters. |
+    | `0` | `assets` | Array | Array\<Asset>| The array of asset results that match the request parameters. |
     | `1` | `items` | Number | - | The number of results that matched the request (MAY be 0). |
     | `2` | `page` | Number | - | The page index of the result (MUST match request). |
-    | `3` | `perPage` | Number | - | The array of asset results that match the request parameters. |
+    | `3` | `perPage` | Number | - | The number of items included on each page (MUST match request). |
 
 - **Errors:**
    
@@ -484,23 +538,24 @@ This method, with no parameters, MUST return a paginated array of all supported 
 
 All parameters to this method (with the exception of `page` and `perPage`) act as filter parameters, returning only results that match all specified parameters.
 
-This method MUST return an empty array if no results match the query. Implementations MAY return an error (`-32002`) if conflicting query parameters are provided. 
+This method MUST return an empty array if no results match the query. Implementations MAY return an error (e.g. `-42002`) if conflicting query parameters are provided. 
 
 - **Request fields:**
 
     | Index | Name | JSON Type | Required | Default | Description |
     | :---- | :--- | :-------- | :------- | :------ | :---------- |
-    | `0` | `baseAssetTicker` | String | `No` | `null` | Match only markets with this base asset. |
-    | `1` | `quoteAssetTicker` | String | `No` | `null` | Match only markets that support this quote asset ticker. |
-    | `2` | `networkId` | Number | `No` | `1` | Match only markets supporting this network. |
-    | `3` | `page` | Number | `No` | `0` | See [pagination.](#pagination) |
-    | `4` | `perPage` | Number | `No` | Impl. specific | See [pagination.](#pagination) |
+    | `0` | `makerAssetTicker` | String | `No` | `null` | Match only markets with this maker asset. |
+    | `1` | `takerAssetTicker` | String | `No` | `null` | Match only markets that support this taker asset ticker. |
+    | `2` | `marketId` | String | `No` | `null` | Match only the market with this ID. MUST match 0 or 1 markets. |
+    | `3` | `networkId` | Number | `No` | `1` | Match only markets supporting this network. |
+    | `4` | `page` | Number | `No` | `0` | See [pagination.](#pagination) |
+    | `5` | `perPage` | Number | `No` | Impl. specific | See [pagination.](#pagination) |
 
 - **Response fields:**
 
     | Index | Name | JSON Type | Schema | Description |
     | :---- | :--- | :-------- | :----- | :---------- |
-    | `0` | `markets` | Array | Market | The array of market results that match the request parameters. |
+    | `0` | `markets` | Array | Array\<Market> | The array of market results that match the request parameters. |
     | `1` | `items` | Number | - | The number of results that matched the request (MAY be 0). |
     | `2` | `page` | Number | - | The page index of the result (MUST match request). |
     | `3` | `perPage` | Number | - | The array of asset results that match the request parameters. |
@@ -515,7 +570,7 @@ This method MUST return an empty array if no results match the query. Implementa
 
     ```json
     {
-        "baseAssetTicker": "WETH",
+        "makerAssetTicker": "WETH",
         "networkId": 1,
         "page": 0,
         "perPage": 2
@@ -524,6 +579,7 @@ This method MUST return an empty array if no results match the query. Implementa
     ```json
     [
         "WETH",
+        null,
         null,
         1,
         0,
@@ -540,32 +596,32 @@ This method MUST return an empty array if no results match the query. Implementa
         "items": 2,
         "markets": [
             {
-                "baseAssetTicker": "WETH",
-                "quoteAssetTickers": [ "DAI", "MKR", "ZRX" ],
+                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+                "makerAssetTicker": "WETH",
+                "takerAssetTickers": [ "DAI", "MKR", "ZRX" ],
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
                     "gasPriceWei": 12000000000,
                 },
                 "quoteInfo": {
-                    "minSize": 0.001,
-                    "maxSize": 10,
-                    "precision": 18,
+                    "minSize": 100000000000000,
+                    "maxSize": 100000000000000000000,
                     "durationSeconds": 15
                 }
             },
             {
-                "baseAssetTicker": "WETH",
-                "quoteAssetTickers": [ "USDC" ],
+                "marketId": "87c0ee47-44c0-4ff0-ba68-6638c79c11dd",
+                "makerAssetTicker": "WETH",
+                "takerAssetTickers": [ "USDC" ],
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
                     "gasPriceWei": 12000000000,
                 },
                 "quoteInfo": {
-                    "minSize": 0.001,
-                    "maxSize": 10,
-                    "precision": 6,
+                    "minSize": 100000000000000,
+                    "maxSize": 100000000000000000000,
                     "durationSeconds": 15
                 }
             },
@@ -576,35 +632,35 @@ This method MUST return an empty array if no results match the query. Implementa
     [
         [
             {
-                "baseAssetTicker": "WETH",
-                "quoteAssetTickers": [ "DAI", "MKR", "ZRX" ],
+                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+                "makerAssetTicker": "WETH",
+                "takerAssetTickers": [ "DAI", "MKR", "ZRX" ],
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
                     "gasPriceWei": 12000000000,
                 },
                 "quoteInfo": {
-                    "minSize": 0.001,
-                    "maxSize": 10,
-                    "precision": 18,
+                    "minSize": 100000000000000,
+                    "maxSize": 100000000000000000000,
                     "durationSeconds": 15
                 }
             },
             {
-                "baseAssetTicker": "WETH",
-                "quoteAssetTickers": [ "USDC" ],
+                "marketId": "87c0ee47-44c0-4ff0-ba68-6638c79c11dd",
+                "makerAssetTicker": "WETH",
+                "takerAssetTickers": [ "USDC" ],
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
                     "gasPriceWei": 12000000000,
                 },
                 "quoteInfo": {
-                    "minSize": 0.001,
-                    "maxSize": 10,
-                    "precision": 6,
+                    "minSize": 100000000000000,
+                    "maxSize": 100000000000000000000,
                     "durationSeconds": 15
                 }
-            },
+            }
         ],
         2,
         0,
@@ -616,74 +672,199 @@ This method MUST return an empty array if no results match the query. Implementa
 
 Primary method for requesting a quote from the dealer. Be sure to see the [quotes section.](#quotes)
 
-To request a quote, a client MUST specify the base and quote asset (by ticker) and either a quote size or a base size.
+To request a quote, a client MUST specify the maker and taker asset (by ticker) and either a maker size or a taker size.
+
+Implementations MAY allow traders to specify _both_ the maker and taker asset sizes, but this is highly illogical in most scenarios.
 
 Implementations MAY choose to support arbitrary swap quotes or simply return the corresponding error code (`-42008` or `-42009`) if the quote requested by the trader is unsupported.
 
-Clients MUST leave at least one size field (either `baseAssetSize` or `quoteAssetSize`) as `null` or not specified that the dealer will fill-in to provide the price quote.
+Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerAssetSize`) as `null` or not specified that the dealer will fill-in to provide the price quote.
 
 - **Request fields:**
 
     | Index | Name | JSON Type | Required | Default | Description |
     | :---- | :--- | :-------- | :------- | :------ | :---------- |
-    | `0` | `baseAssetTicker` | String | `Yes` | - | Specify the base asset of the market and price calculation. |
-    | `1` | `quoteAssetTicker` | String | `Yes` | - | Specify the quote asset of the market the asset used for the price. |
-    | `2` | `baseAssetSize` | Number | `No` | `null` | Client MUST specify either this or `quoteAssetSize`. |
-    | `3` | `quoteAssetSize` | Number | `No` | `null` | Client MUST specify either this or `baseAssetSize`. |
-    | `4` | `side` | String | `Yes` | - | Specify if the client wants to buy (`"B"`) or sell (`"S"`) the base asset. |
-    | `5` | `takerAddress` | String | `No` | (3) | The address of the taker that will fill the requested quote (see 3). |
-    | `6` | `priceOnly` | Boolean | `No` | `false` | If `false`, the quote MUST include a signed 0x order for the offer (5). |
-    | `7` | `extra` | Object | `No` | `null` | Optional extra structured data. MAY be omitted by implementations.
+    | `0` | `makerAssetTicker` | String | `Yes` | - | Specify the maker asset of the quote (sent by the dealer). |
+    | `1` | `takerAssetTicker` | String | `Yes` | - | Specify the taker asset of the quote (sent by the client). |
+    | `2` | `makerAssetSize` | Number | `No` | `null` | Client MUST specify either this or `takerAssetSize`. |
+    | `3` | `takerAssetSize` | Number | `No` | `null` | Client MUST specify either this or `makerAssetSize`. |
+    | `4` | `takerAddress` | String | `No` | (See [3](#notes)) | The address of the taker that will fill the requested quote (see 3). |
+    | `5` | `includeOrder` | Boolean | `No` | `true` | If `true`, the quote MUST include a signed 0x order for the offer (5). |
+    | `6` | `includeTx` | Boolean | `No` | `false` | If `true`, the quote MUST included the [ABIv2 encoded fill transaction data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) (6). |
+    | `7` | `extra` | Object | `No` | `null` | Optional extra structured data from the taker. MAY be omitted by implementations. |
 
 - **Response fields:**
 
     | Index | Name | JSON Type | Schema | Description |
     | :---- | :--- | :-------- | :----- | :---------- |
-    | `0` | `quoteId`  | String | [UUID](#schema-uuid) | A UUID (v4) that MUST correspond to this offer only. |
-    | `1` | `baseAssetTicker` | String | [Ticker](#schema-ticker) | Shorthand ticker of the quote's base asset (see [quotes](#quotes)). |
-    | `2` | `quoteAssetTicker` | String | [Ticker](#schema-ticker) | Shorthand ticker of the quote's quote asset (see [quotes](#quotes)). |
-    | `3` | `baseAssetSize` | Number | - | The quote's base asset size (see [quotes](#quotes)). |
-    | `4` | `quoteAssetSize` | Number | - | The quote's quote asset size (see [quotes](#quotes)). |
-    | `5` | `side` | String | [Side](#schema-side) | The quote "direction" from the client perspective (ONLY "B" or "S"). |
-    | `6` | `price` | Number | - | The offer's price in units of the quote asset per base asset (4). |
-    | `7` | `validUntil` | Number | [Time](#schema-time) | The UNIX timestamp after which the quote will be rejected for settlement. |
-    | `8` | `orderHash` | String | - | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).
-    | `9` | `order` | Object | [Order](#schema-order) | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.
+    | `0` | `quote` | Object | [Quote](#schema-quote) | A quote (offer) for the specified values from the client. |
+    | `1` | `extra` | Object | - | OPTIONAL extra structured data relevant to this offer.
 
 - **Errors:**
    
    | Code | Description | Notes |
    | :--- | :---------- | :---- |
-   | `-42005` | Two size requests. | Occurs when a client specifies `baseAssetSize` and `quoteAssetSize`. |
-   | `-42006` | Size too precise. | Occurs when a client requests a quote size with too many decimals. |
-   | `-42007` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
-   | `-42008` | Invalid side. | Available for implementations to indicate |
+   | `-42005` | Two size requests. | Occurs when a client specifies both `baseAssetSize` and `quoteAssetSize`. |
+   | `-42006` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
+   | `-42007` | Invalid side. | Available for implementations to indicate lack of support for a currency-pair style quote. |
    | `-42008` | Temporary restriction. | Available for implementations to indicate taker-specific temporary restrictions. |
-   | `-42008` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
-   | `-42009` | Unsupported quote asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
-   | `-42009` | Quote too large. | Occurs when a quote would exceed the market maximum or the dealer's balance. |
-   | `-42010` | Quote too small. | Occurs when a quote would be smaller than the market's minimum size. |
-   | `-42011` | Quote unavailable at this time. | Reserved for various states where dealers may not be serving quotes. |
+   | `-42009` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
+   | `-42010` | Unsupported taker asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
+   | `-42011` | Quote too large. | Occurs when a quote would exceed the market maximum or the dealer's balance. |
+   | `-42012` | Quote too small. | Occurs when a quote would be smaller than the market's minimum size. |
+   | `-42013` | Quote unavailable at this time. | Reserved for various states where dealers may not be serving quotes. |
 
 - **Example request bodies:**
 
     ```json
     {
-        "baseAssetTicker": "ZRX",
-        "quoteAssetTicker": "DAI",
-        "baseAssetSize": 1400,
-        "side": "B",
-        "takerAddress": "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459"
+        "makerAssetTicker": "ZRX",
+        "takerAssetTicker": "DAI",
+        "makerAssetSize": 1435000000000000000,
+        "takerAddress": "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459",
+        "includeOrder": true,
+        "includeTx": false
     }
     ```
     ```json
     [
         "ZRX",
-        "WETH",
-        100,
+        "DAI",
+        1435000000000000000,
         null,
-        "B",
         "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459"
+        true,
+        false
+    ]
+    ```
+
+- **Example response bodies:**
+
+    ```json
+    {
+        "quote": {
+            "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+            "makerAssetData": "ZRX",
+            "takerAssetData": "DAI",
+            "makerAssetSize": 1435000000000000000,
+            "takerAssetSize": 300000000000000000,
+            "expiration": 1573775025,
+            "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+            "order": {
+                "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                "feeRecipientAddress": "0x",
+                "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "makerAssetAmount": "1435000000000000000",
+                "takerAssetAmount": "300000000000000000",
+                "makerFee": "0",
+                "takerFee": "0",
+                "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+                "expirationTimeSeconds": "1573790025",
+                "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+                "salt": "1572620203025",
+                "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+                "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "makerFeeAssetData": "0x",
+                "takerFeeAssetData": "0x"
+            }
+        }
+    }
+    ```
+    ```json
+    [
+        {
+            "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+            "makerAssetData": "ZRX",
+            "takerAssetData": "DAI",
+            "makerAssetSize": 1435000000000000000,
+            "takerAssetSize": 300000000000000000,
+            "expiration": 1573775025,
+            "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+            "order": {
+                "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                "feeRecipientAddress": "0x",
+                "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "makerAssetAmount": "1435000000000000000",
+                "takerAssetAmount": "300000000000000000",
+                "makerFee": "0",
+                "takerFee": "0",
+                "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+                "expirationTimeSeconds": "1573790025",
+                "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+                "salt": "1572620203025",
+                "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+                "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "makerFeeAssetData": "0x",
+                "takerFeeAssetData": "0x"
+            }
+        }
+    ]
+    ```
+
+### Method: `dealer_submitFill`
+
+Submit a previously-fetched quote for settlement. Can be thought of as a "request-to-fill" by a trader.
+
+This method MUST support executing the signed fill transaction from the client, according to [ZEIP-18.](https://github.com/0xProject/ZEIPs/issues/18)
+
+Implementations MAY use the `validityParameters` from previously-submitted quotes to reject fills based on external parameters.
+
+The order or fill transaction data SHOULD be stored by implementations and associated with the quote ID so clients need not submit the raw fill transaction or the transaction hash.
+
+Dealer implementations MAY assume the signer address is equal to the originally-provided `takerAddress` if not provided in the request-to-fill.
+
+Implementations SHOULD strive to ONLY require the first three parameters for fill requests (`quoteId`, `salt`, and `signature`).
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+    | `0` | `quoteId` | String  | `Yes` | - | The ID of the original quote that is being submitted for settlement. |
+    | `1` | `salt` | String | `Yes` | - | The salt used to generate the fill transaction hash and signature. |
+    | `2` | `signature` | String | `Yes` | - | The taker's signature of the fill transaction data. |
+    | `3` | `signer` | String | `No` | - | The address that signed the fill. SHOULD be omitted (SHOULD match original taker). |
+    | `4` | `data` | String | `No` | - | The full fill transaction call data. SHOULD be omitted. |
+    | `5` | `hash` | String | `No` | - | The salted hash of the fill transaction. SHOULD be omitted. |
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `quoteId`  | String | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement. |
+    | `1` | `orderHash` | String | - | The [hash of the 0x order that](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order) is being filled.
+    | `2` | `transactionHash` | String | - | The hash of the submitted fill transaction (transaction ID).
+    | `3` | `submittedAt` | Number | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.
+    | `4` | `extra` | Object | - | OPTIONAL implementation-specific relevant structured data.
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-42014` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
+   | `-42015` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
+   | `-42016` | Already filled. | Available to allow implementations to indicate specific double-fill attempts. |
+   | `-42017` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
+   | `-42018` | Insufficient taker balance. | Available to indicate specific validation failure. |
+   | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure. |
+   | `-42020` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
+
+
+- **Example request bodies:**
+
+    ```json
+    {
+        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "salt": "1572620203025",
+        "signature": "0xd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d25114367ef9b201c55d7f7eaa7301c0c8540ca3afbd02"
+    }
+    ```
+    ```json
+    [
+        "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "1572620203025",
+        "0xd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d25114367ef9b201c55d7f7eaa7301c0c8540ca3afbd02"
     ]
     ```
 
@@ -692,129 +873,42 @@ Clients MUST leave at least one size field (either `baseAssetSize` or `quoteAsse
     ```json
     {
         "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "baseAssetTicker": "ZRX",
-        "quoteAssetTicker": "WETH",
-        "baseAssetSize": 100,
-        "quoteAssetSize": 0.3,
-        "side": "B",
-        "price": 0.003,
-        "validUntil": 1573775025,
         "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-        "order": {
-            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-            "feeRecipientAddress": "0x",
-            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "makerAssetAmount": "100000000000000000000",
-            "takerAssetAmount": "300000000000000000",
-            "makerFee": "0",
-            "takerFee": "0",
-            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
-            "expirationTimeSeconds": "1573790025",
-            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
-            "salt": "1572620203025",
-            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
-            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            "makerFeeAssetData": "0x",
-            "takerFeeAssetData": "0x"
-        }
+        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        "submittedAt": 1574108114.3301,
     }
     ```
     ```json
     [
         "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "ZRX",
-        "WETH",
-        100,
-        0.3,
-        "B",
-        0.003,
-        1573775025,
         "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-        {
-            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-            "feeRecipientAddress": "0x",
-            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "makerAssetAmount": "100000000000000000000",
-            "takerAssetAmount": "300000000000000000",
-            "makerFee": "0",
-            "takerFee": "0",
-            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
-            "expirationTimeSeconds": "1573790025",
-            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
-            "salt": "1572620203025",
-            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
-            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            "makerFeeAssetData": "0x",
-            "takerFeeAssetData": "0x"
-        }
+        "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        1574108114.3301
     ]
-    ```
-
-### Method: `dealer_submitFill`
-
-Fetch an order-only object, provided a known (valid) quote UUID.
-
-Can be used alongside the `fetchQuote` and `fetchSwapQuote` methods with a `priceOnly` filter for a 2-step quote process.
-
-This method MUST support executing the signed fill transaction from the client, according to [ZEIP-18.](https://github.com/0xProject/ZEIPs/issues/18)
-
-- **Request fields:**
-
-    | Index | Name | JSON Type | Required | Default | Description |
-    | :---- | :--- | :-------- | :------- | :------ | :---------- |
-
-- **Response fields:**
-
-    | Index | Name | JSON Type | Schema | Description |
-    | :---- | :--- | :-------- | :----- | :---------- |
-    | `0` | `quoteId`  | String | [UUID](#schema-uuid) | A UUID (v4) that MUST correspond to this offer only. |
-
-- **Errors:**
-   
-   | Code | Description | Notes |
-   | :--- | :---------- | :---- |
-   | `-42012` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
-   | `-42013` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
-   | `-42014` | Already filled. | Available to allow implementations to indicate specific double-fill attempts. |
-   | `-42015` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
-   | `-42016` | Insufficient taker balance. | Available to indicate specific validation failure. |
-   | `-42017` | Insufficient taker allowance. | Available to indicate specific validation failure. |
-   | `-42018` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data.
-
-
-- **Example request bodies:**
-
-    ```json
-    {}
-    ```
-    ```json
-    []
-    ```
-
-- **Example response bodies:**
-
-    ```json
-    {}
-    ```
-    ```json
-    []
     ```
 
 ## Appendix
 
-1. This definition of a market makes an intentional departure from conventional currency-pair based markets in which their is a single quote asset and a single base asset.
+### Important resources
+
+- [JSONRPC 2.0 Specification](https://www.jsonrpc.org/specification)
+- [0x Protocol Specification (v3)](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md)
+- [0x Improvement Proposal (ZEIP) 18](https://github.com/0xProject/ZEIPs/issues/18)
+- [EIP-20 (ERC-20 specification)](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md#symbol)
+
+### Notes
+
+1. This definition of a market makes an intentional departure from conventional currency-pair based markets in which their is a single quote asset and a single base asset. Defining only the maker and taker assets for a market allows greater flexibility for implementers, and allows pricing to be defined in terms of either asset at higher levels.
 1. If the dealer is operating on the main Ethereum network, they MUST treat the `networkID` of `1` as the Ethereum mainnet, as specified in EIP-155. Private and test networks may use any network ID, but SHOULD use conventions established by public test networks (e.g. Ropsten is 3).
 1. The default value SHOULD be the null address (20 null bytes) represented as a hex string. Implementations MAY require takers to specify a `takerAddress`.
 1. Quote sizes and prices within quotes when represented using an asset's user representation MUST use the level of precision specified in the corresponding market.
-1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `priceOnly` can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
+1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `includeOrder` as `false can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size. 
+    - Implementations MAY treat these types of quotes separately in internal tracking and/or pricing mechanisms.
+1. This feature is desirable for some users as it opens the door for clients to sign fill transactions with lower-level cryptographic primitives, rather than require the generally larger libraries required to prepare the fill transaction data from the order itself.
 
-## Error codes
+### Error codes
 
 A table of all specified error codes, which MAY be used in methods other than where they are specified, if applicable.
-
-
 
 | Code | Description | Notes |
 | :--- | :---------- | :---- |
@@ -827,19 +921,18 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42003` | Invalid address. | Returned when an invalid Ethereum address is provided. |
 | `-42004` | Invalid asset data. | Returned when malformed ABIv2 asset data is included in a request. |
 | `-42005` | Two size requests. | Occurs when a client specifies `baseAssetSize` and `quoteAssetSize`. |
-| `-42006` | Size too precise. | Occurs when a client requests a quote size with too many decimals. |
-| `-42007` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
-| `-42008` | Invalid side. | Available for implementations to indicate |
+| `-42006` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
+| `-42007` | Invalid side. | Available for implementations to indicate |
 | `-42008` | Temporary restriction. | Available for implementations to indicate taker-specific temporary restrictions. |
-| `-42008` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
-| `-42009` | Unsupported quote asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
-| `-42009` | Quote too large. | Occurs when a quote would exceed the market maximum or the dealer's balance. |
-| `-42010` | Quote too small. | Occurs when a quote would be smaller than the market's minimum size. |
-| `-42011` | Quote unavailable at this time. | Reserved for various states where dealers may not be serving quotes. |
-| `-42012` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
-| `-42013` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
-| `-42014` | Order already filled. | Available to allow implementations to indicate specific double-fill attempts. |
-| `-42015` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
-| `-42016` | Insufficient taker balance. | Available to indicate specific validation failure. |
-| `-42017` | Insufficient taker allowance. | Available to indicate specific validation failure. |
-| `-42018` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
+| `-42009` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
+| `-42010` | Unsupported taker asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
+| `-42011` | Quote too large. | Occurs when a quote would exceed the market maximum or the dealer's balance. |
+| `-42012` | Quote too small. | Occurs when a quote would be smaller than the market's minimum size. |
+| `-42013` | Quote unavailable at this time. | Reserved for various states where dealers may not be serving quotes. |
+| `-42014` | Quote expired. | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
+| `-42015` | Unknown quote. | Available to allow implementations differentiate expired from never-quoted. |
+| `-42016` | Order already filled. | Available to allow implementations to indicate specific double-fill attempts. |
+| `-42017` | Fill validation failed. | Available to indicate current chain state simulation validation failure. |
+| `-42019` | Insufficient taker balance. | Available to indicate specific validation failure. |
+| `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure. |
+| `-42020` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
