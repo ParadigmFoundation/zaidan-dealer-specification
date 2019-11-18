@@ -36,6 +36,7 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
     - [GetMarkets](#method-dealer-getmarkets)
     - [GetQuote](#method-dealer-getquote)
     - [SubmitFill](#method-dealer-submitfill)
+    - [Time](#method-dealer-time)
 - [Appendix](#appendix)
     - [Notes](#notes)
     - [Important resources](#important-resources)
@@ -282,7 +283,7 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
   | :--- | :----- | :------- | :-------- | :---------- |
   | `marketId` | - | Yes | String | An implementation-specific market ID string. MUST be unique for each market. |
   | `makerAssetTicker` | Ticker | `Yes` | String | The shorthand ticker of the markets maker asset (provided by the dealer). |
-  | `takerAssetTickers` | Ticker[] | `Yes` | Array | An array of shorthand tickers for which quote assets are supported. |
+  | `takerAssetTickers` | Ticker[] | `Yes` | Array | An array of shorthand tickers for which quotes are supported. |
   | `tradeInfo` | TradeInfo | `Yes` | Object | Information about trade settlement and execution for this market (gas price, etc.). |
   | `quoteInfo` | QuoteInfo | `Yes` | Object | Information about quotes provided on this market (max/min size, etc.). |
   | `metadata` | - | `No` | Object | Optional and implementation-specific key-value pairs for additional market metadata. |
@@ -688,7 +689,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     | `1` | `takerAssetTicker` | String | `Yes` | - | Specify the taker asset of the quote (sent by the client). |
     | `2` | `makerAssetSize` | Number | `No` | `null` | Client MUST specify either this or `takerAssetSize`. |
     | `3` | `takerAssetSize` | Number | `No` | `null` | Client MUST specify either this or `makerAssetSize`. |
-    | `4` | `takerAddress` | String | `No` | (See [3](#notes)) | The address of the taker that will fill the requested quote (see 3). |
+    | `4` | `takerAddress` | String | `No` | (See [3](#notes)) | The address of the taker that will fill the requested quote (see 4). |
     | `5` | `includeOrder` | Boolean | `No` | `true` | If `true`, the quote MUST include a signed 0x order for the offer (5). |
     | `6` | `includeTx` | Boolean | `No` | `false` | If `true`, the quote MUST included the [ABIv2 encoded fill transaction data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) (6). |
     | `7` | `extra` | Object | `No` | `null` | Optional extra structured data from the taker. MAY be omitted by implementations. |
@@ -887,6 +888,60 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ]
     ```
 
+### Method: `dealer_time`
+
+Fetch the current time from the dealer server.
+
+Optionally provide a time in the request (`clientTime`) to get the difference (useful for clock synchronization and estimating network latency).
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+    | `0` | `clientTime` | Number | `No` | `null` | A timestamp from the client to get a difference in seconds.
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `time` | Number | [Time](#schema-time) | The UNIX timestamp of the dealer's clock at the time of request. |
+    | `1` | `diff` | Number | - | The difference between the dealer time and the client time. ONLY if `clientTime` in request. |
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
+
+
+- **Example request bodies:**
+
+    ```json
+    {
+        "clientTime": 1574108764.1019
+    }
+    ```
+    ```json
+    [
+        1574108764.1019
+    ]
+    ```
+
+- **Example response bodies:**
+
+    ```json
+    {
+        "time": 1574108764.2118,
+        "diff": 0.1099
+    }
+    ```
+    ```json
+    [
+        1574108764.2118,
+        0.1099
+    ]
+    ```
+
 ## Appendix
 
 ### Important resources
@@ -901,7 +956,6 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
 1. This definition of a market makes an intentional departure from conventional currency-pair based markets in which their is a single quote asset and a single base asset. Defining only the maker and taker assets for a market allows greater flexibility for implementers, and allows pricing to be defined in terms of either asset at higher levels.
 1. If the dealer is operating on the main Ethereum network, they MUST treat the `networkID` of `1` as the Ethereum mainnet, as specified in EIP-155. Private and test networks may use any network ID, but SHOULD use conventions established by public test networks (e.g. Ropsten is 3).
 1. The default value SHOULD be the null address (20 null bytes) represented as a hex string. Implementations MAY require takers to specify a `takerAddress`.
-1. Quote sizes and prices within quotes when represented using an asset's user representation MUST use the level of precision specified in the corresponding market.
 1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `includeOrder` as `false can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size. 
     - Implementations MAY treat these types of quotes separately in internal tracking and/or pricing mechanisms.
 1. This feature is desirable for some users as it opens the door for clients to sign fill transactions with lower-level cryptographic primitives, rather than require the generally larger libraries required to prepare the fill transaction data from the order itself.
