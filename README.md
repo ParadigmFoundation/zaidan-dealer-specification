@@ -1,3 +1,7 @@
+## Notice: in development
+
+This section will be removed when the public interface has stabilized.
+
 # Dealer JSONRPC v1.0
 
 Definitions and specification for the Dealer [JSONRPC (2.0)](https://www.jsonrpc.org/specification) API. This document specifies the first public Dealer JSONRPC version, `v1.0`.
@@ -50,11 +54,13 @@ In addition to notices in each section, each of the following must be true in or
 These requirements are intended to motivate strong guarantees of compatibility between clients and servers and ensure maximum levels of safety for the operators of each: traders and dealers that implement this API.
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
--   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
+-   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
 -   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network (not yet deployed).
+-   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
+-   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
--   Implementations MUST NOT use floating points anywhere in the public API, with the exception of UNIX timestamps.
+-   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
 -   Implementations MAY require that quote requests include the potential taker's address.
@@ -705,17 +711,17 @@ All other fields can be dynamically populated from 0x event logs based on a know
 
 -   **Request fields:**
 
-    | Index | Name               | JSON Type | Required | Default                                                                  | Description                                                      |
-    | :---- | :----------------- | :-------- | :------- | :----------------------------------------------------------------------- | :--------------------------------------------------------------- |
-    | `0`   | `quoteId`          | String    | `No`     | `null`                                                                   | Match only the trade with this quote ID. MUST match 0 or 1 item. |
-    | `1`   | `marketId`         | String    | `No`     | `null`                                                                   | Match only trades for this market ID.                            |
-    | `2`   | `takerAddress`     | String    | `No`     | `null`                                                                   | Match only trades filled by this taker address.                  |
-    | `3`   | `transactionHash`  | String    | `No`     | `null | Match only the trade with this TX ID. MUST match 0 or 1 item.    |
-    | `4`   | `orderHash`        | String    | `No`     | `null | Match only the trade with this order ID. MUST match 0 or 1 item. |
-    | `5`   | `makerAssetTicker` | String    | `No`     | `null`                                                                   | Match only trades where this ticker was the maker asset.         |
-    | `6`   | `takerAssetTicker` | String    | `No`     | `null`                                                                   | Match only trades where this ticker was the taker asset.         |
-    | `7`   | `page`             | Number    | `No`     | 0                                                                        | See [pagination.](#pagination)                                   |
-    | `7`   | `perPage`          | Number    | `No`     | Impl. specific                                                           | See [pagination.](#pagination)                                   |
+    | Index | Name               | JSON Type | Required | Default        | Description                                                      |
+    | :---- | :----------------- | :-------- | :------- | :------------- | :--------------------------------------------------------------- |
+    | `0`   | `quoteId`          | String    | `No`     | `null`         | Match only the trade with this quote ID. MUST match 0 or 1 item. |
+    | `1`   | `marketId`         | String    | `No`     | `null`         | Match only trades for this market ID.                            |
+    | `2`   | `takerAddress`     | String    | `No`     | `null`         | Match only trades filled by this taker address.                  |
+    | `3`   | `transactionHash`  | String    | `No`     | `null`         | Match only the trade with this TX ID. MUST match 0 or 1 item.    |
+    | `4`   | `orderHash`        | String    | `No`     | `null`         | Match only the trade with this order ID. MUST match 0 or 1 item. |
+    | `5`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the maker asset.         |
+    | `6`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the taker asset.         |
+    | `7`   | `page`             | Number    | `No`     | 0              | See [pagination.](#pagination)                                   |
+    | `7`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                   |
 
 -   **Response fields:**
 
