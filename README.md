@@ -212,9 +212,9 @@ Defines information about quote parameters for a given market. Does NOT included
 
     | Name              | Schema | JSON Type | Description                                                                               |
     | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
-    | `minSize`         | -      | `number`  | The minimum supported trade size, in base units of a market's maker asset.                |
-    | `maxSize`         | -      | `number`  | The maximum supported trade size, in base units of a market's maker asset.                |
-    | `durationSeconds` | -      | `number`  | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
+    | `minSize`         | -      | Number  | The minimum supported trade size, in base units of a market's maker asset.                |
+    | `maxSize`         | -      | Number  | The maximum supported trade size, in base units of a market's maker asset.                |
+    | `durationSeconds` | -      | Number  | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
 
 -   **JSON Example**:
 
@@ -238,7 +238,7 @@ Implementations MAY provide additional fields in this schema (such as a link to 
 
     | Name    | Schema | JSON Type | Description                                          |
     | :------ | :----- | :-------- | :--------------------------------------------------- |
-    | `name`  | -      | Number    | The name of the validation parameter.                |
+    | `name`  | -      | String    | The name of the validation parameter.                |
     | `value` | -      | Any       | The enforced value (MAY be primitive or structured). |
 
 -   **JSON Example**:
