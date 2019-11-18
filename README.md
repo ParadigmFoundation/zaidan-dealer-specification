@@ -88,12 +88,15 @@ Because there is no concept of a base or quote asset, quotes include no notion o
 
 Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. Consider the following requests.
 
-```js
+```json
 // [ MAKER_ASSET, TAKER_ASSET, MAKER_ASSET_SIZE, TAKER_ASSET_SIZE ]
 
-["DAI", "ZRX", null, 100000000000000000000][("ZRX", "DAI", 100000000000000000000, null)][ // 1 // 2
-    ("ZRX", "DAI", null, 10000000000000000000)
-][("DAI", "ZRX", 10000000000000000000, null)]; // 3 // 4
+[
+    ["DAI", "ZRX", null, 100000000000000000000],
+    ["ZRX", "DAI", 100000000000000000000, null],
+    ["ZRX", "DAI", null, 10000000000000000000],
+    ["DAI", "ZRX", 10000000000000000000, null]
+]
 ```
 
 1. Client requests to swap 100 ZRX for DAI (receiving the DAI, sending the ZRX)
