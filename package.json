@@ -1,0 +1,16 @@
+{
+  "name": "zaidan-dealer",
+  "version": "1.0.0-beta",
+  "description": "Specification documents and examples for Zaidan dealer systems.",
+  "main": "index.js",
+  "repository": "git@github.com:ParadigmFoundation/zaidan-dealer-specification.git",
+  "author": "Henry Harder <henry@paradigm.market>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "prettier": "prettier --write '**/*.{ts,tsx,json,md}' --config .prettierrc"
+  },
+  "devDependencies": {
+    "prettier": "^1.19.1"
+  }
+}
