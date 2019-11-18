@@ -23,17 +23,18 @@ The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or oth
 - [Schemas](#schemas)
     - [Ticker](#schema-ticker)
     - [Time](#schema-time)
-    - [Side](#schema-side)
     - [UUID](#schema-uuid)
     - [TradeInfo](#schema-tradeinfo)
     - [QuoteInfo](#schema-quoteinfo)
     - [Asset](#schema-asset)
     - [Market](#schema-market)
     - [Quote](#schema-quote)
+    - [Trade](#schema-trade)
 - [Methods](#methods)
     - [AuthStatus](#method-dealer_authstatus)
     - [GetAssets](#method-dealer_getassets)
     - [GetMarkets](#method-dealer_getmarkets)
+    - [GetPastTrades](#method-dealer_getpasttrades)
     - [GetQuote](#method-dealer_getquote)
     - [SubmitFill](#method-dealer_submitfill)
     - [Time](#method-dealer_time)
@@ -368,6 +369,42 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     }
     ```
 
+### Schema: `Trade`
+
+Defines a past (settled) trade from a dealer.
+
+- Fields:
+  
+    | Name | Schema | Required | JSON Type | Description |
+    | :--- | :----- | :------- | :-------- | :---------- |
+    | `quoteId` | [UUID](#schema-uuid) | `Yes` | String | The ID of the original quote that was filled in a trade. |
+    | `marketId` | - | `Yes` | String | Implementation-specific ID corresponding to the correct market. |
+    | `orderHash` | - | `Yes` | String | The 0x order hash of the order filled in a trade. |
+    | `transactionHash` | - | `Yes` | String | The Ethereum transaction hash (transaction ID) of fill. |
+    | `takerAddress` | - | `Yes` | String | The Ethereum address of the taker who requested and filled the quote. |
+    | `timestamp` | [Time](#schema-time) | `Yes`| Number | The UNIX timestamp the fill was submitted (or mined) at. |
+    | `makerAssetTicker` | [Ticker](#schema-ticker) | `Yes` | String | The ticker of the trade's maker asset. |
+    | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes` | String | The ticker of the trade's taker asset. |
+    | `makerAssetAmount` | - | `Yes` | Number | The amount of the maker asset transacted in the trade. |
+    | `takerAssetAmount` | - | `Yes` | Number | The amount of the taker asset transacted in the trade. |
+  
+- JSON Example:
+  
+    ```json
+    {
+        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+        "timestamp": 1574108114.3301,
+        "makerAssetTicker": "WETH",
+        "takerAssetTicker": "DAI",
+        "makerAssetAmount": 883000000000000000,
+        "takerAssetAmount": 143500000000000000000,
+    }
+    ```
+
 ## Methods
 
 ### Method: `dealer_authStatus`
@@ -427,9 +464,9 @@ Implementation MAY use arbitrary mechanisms to determine a taker's authorization
 
 ### Method: `dealer_getAssets`
 
-Fetch information about currently supported ERC-20 assets, and optionally filter with query parameters.
+Fetch information about currently supported ERC-20 assets, and optionally filter with query parameters. This method is [paginated.](#pagination)
 
-This method, with no parameters, MUST return a paginated array of all supported assets. 
+With no request parameters, this method MUST return a paginated array of all supported assets. 
 
 All parameters to this method (with the exception of `page` and `perPage`) act as filter parameters, returning only results that match all specified parameters.
 
@@ -533,7 +570,7 @@ This method MUST return an empty array if no results match the query. Implementa
 
 ### Method: `dealer_getMarkets`
 
-Fetch information about currently supported [markets](#schema-market).
+Fetch information about currently supported [markets](#schema-market). This method is [paginated.](#pagination)
 
 This method, with no parameters, MUST return a paginated array of all supported markets. 
 
@@ -666,6 +703,119 @@ This method MUST return an empty array if no results match the query. Implementa
         2,
         0,
         2
+    ]
+    ```
+
+### Method: `dealer_getPastTrades`
+
+Get records of past trades. This method is [paginated.](#pagination)
+
+If no filter parameters are provided, this method MUST return a paginated array of all past trades.
+
+The specification for this method (and the `Trade` schema) has been designed such that, at minimum, implementations must only associate the quote ID and market ID with a transaction hash.
+
+All other fields can be dynamically populated from 0x event logs based on a known transaction hash.
+
+- **Request fields:**
+
+    | Index | Name | JSON Type | Required | Default | Description |
+    | :---- | :--- | :-------- | :------- | :------ | :---------- |
+    | `0` | `quoteId` | String | `No` | `null` | Match only the trade with this quote ID. MUST match 0 or 1 item. |
+    | `1` | `marketId` | String | `No` | `null` | Match only trades for this market ID. |
+    | `2` | `takerAddress` | String | `No` | `null` | Match only trades filled by this taker address. |
+    | `3` | `transactionHash` | String | `No` | `null | Match only the trade with this TX ID. MUST match 0 or 1 item. |
+    | `4` | `orderHash` | String | `No` | `null | Match only the trade with this order ID. MUST match 0 or 1 item. |
+    | `5` | `makerAssetTicker` | String | `No` | `null` | Match only trades where this ticker was the maker asset. |
+    | `6` | `takerAssetTicker` | String | `No` | `null` | Match only trades where this ticker was the taker asset. |
+    | `7` | `page` | Number | `No` | 0 | See [pagination.](#pagination) |
+    | `7` | `perPage` | Number | `No` | Impl. specific | See [pagination.](#pagination) |
+
+- **Response fields:**
+
+    | Index | Name | JSON Type | Schema | Description |
+    | :---- | :--- | :-------- | :----- | :---------- |
+    | `0` | `trades` | Array | Array\<Trade> | The array of trade results that match the request (MAY be all trades). |
+    | `1` | `items` | Number | - | The number of results that matched the request (MAY be 0). |
+    | `2` | `page` | Number | - | The page index of the result (MUST match request). |
+    | `3` | `perPage` | Number | - | The array of asset results that match the request parameters. |
+
+- **Errors:**
+   
+   | Code | Description | Notes |
+   | :--- | :---------- | :---- |
+   | `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
+   | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
+   | `-42003` | Invalid address. | Returned when an invalid Ethereum address is provided. |
+   | `-42021` | Invalid transaction ID. | Available to indicate an invalid transaction hash in a request. |
+   | `-42022` | Invalid order hash. | Available to indicate an order transaction hash in a request. |
+   | `-42023` | Invalid UUID. | Available to indicate failure to validate a universally unique identifier (UUID). |
+
+
+- **Example request bodies:**
+
+    ```json
+    {
+        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        "page": 0,
+        "perPage": 10
+    }
+    ```
+    ```json
+    [
+        null,
+        null,
+        null,
+        "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        null,
+        null,
+        null,
+        0,
+        10
+    ]
+    ```
+
+- **Example response bodies:**
+
+    ```json
+    {
+        "page": 0,
+        "perPage": 10,
+        "items": 1,
+        "trades": [
+            {
+                "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+                "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+                "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                "timestamp": 1574108114.3301,
+                "makerAssetTicker": "WETH",
+                "takerAssetTicker": "DAI",
+                "makerAssetAmount": 883000000000000000,
+                "takerAssetAmount": 143500000000000000000
+            }
+        ]
+    }
+    ```
+    ```json
+    [
+        [
+            {
+                "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+                "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+                "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                "timestamp": 1574108114.3301,
+                "makerAssetTicker": "WETH",
+                "takerAssetTicker": "DAI",
+                "makerAssetAmount": 883000000000000000,
+                "takerAssetAmount": 143500000000000000000
+            }
+        ],
+        1,
+        0,
+        10
     ]
     ```
 
@@ -850,6 +1000,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
    | `-42018` | Insufficient taker balance. | Available to indicate specific validation failure. |
    | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure. |
    | `-42020` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
+   | `-42023` | Invalid UUID. | Available to indicate failure to validate a universally unique identifier (UUID). |
 
 
 - **Example request bodies:**
@@ -976,7 +1127,7 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42004` | Invalid asset data. | Returned when malformed ABIv2 asset data is included in a request. |
 | `-42005` | Two size requests. | Occurs when a client specifies `baseAssetSize` and `quoteAssetSize`. |
 | `-42006` | Taker not authorized. | Occurs when the taker's address is not authorized for trading. |
-| `-42007` | Invalid side. | Available for implementations to indicate |
+| `-42007` | Invalid side. | Available for implementations to indicate lack of support for arbitrary swaps. |
 | `-42008` | Temporary restriction. | Available for implementations to indicate taker-specific temporary restrictions. |
 | `-42009` | Unsupported market. | Occurs when the specified market (quote and base pair) is not supported. |
 | `-42010` | Unsupported taker asset for market. | Available for implementations to indicate lack of support for arbitrary swaps. |
@@ -990,3 +1141,6 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42019` | Insufficient taker balance. | Available to indicate specific validation failure. |
 | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure. |
 | `-42020` | Quote validation failure. | Available to indicate implementation-specific failures of extra quote data. |
+| `-42021` | Invalid transaction ID. | Available to indicate an invalid transaction hash in a request. |
+| `-42022` | Invalid order hash. | Available to indicate an order transaction hash in a request. |
+| `-42023` | Invalid UUID. | Available to indicate failure to validate a universally unique identifier (UUID). |
