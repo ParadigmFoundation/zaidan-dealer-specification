@@ -835,7 +835,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     | :---- | :---------- | :-------- | :----------------------------- | :-------------------------------------------------------- |
     | `0`   | `quote`     | Object    | [Quote](#schema-quote)         | A quote (offer) for the specified values from the client. |
     | `1`   | `tradeInfo` | Object    | [TradeInfo](#schema-tradeinfo) | Settlement information (e.g. gas price).                  |
-    | `1`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
+    | `2`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
 
 -   **Errors:**
 
