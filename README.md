@@ -633,7 +633,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
-                    "gasPriceWei": 12000000000
+                    "gasPrice": 12000000000
                 },
                 "quoteInfo": {
                     "minSize": 100000000000000,
@@ -648,7 +648,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
-                    "gasPriceWei": 12000000000
+                    "gasPrice": 12000000000
                 },
                 "quoteInfo": {
                     "minSize": 100000000000000,
@@ -670,7 +670,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
-                    "gasPriceWei": 12000000000
+                    "gasPrice": 12000000000
                 },
                 "quoteInfo": {
                     "minSize": 100000000000000,
@@ -685,7 +685,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "tradeInfo": {
                     "networkId": 1,
                     "gasLimit": 210000,
-                    "gasPriceWei": 12000000000
+                    "gasPrice": 12000000000
                 },
                 "quoteInfo": {
                     "minSize": 100000000000000,
@@ -883,7 +883,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         "tradeInfo": {
             "networkId": 1,
             "gasLimit": 210000,
-            "gasPriceWei": 12000000000
+            "gasPrice": 12000000000
         },
         "quote": {
             "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
@@ -947,7 +947,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         {
             "networkId": 1,
             "gasLimit": 210000,
-            "gasPriceWei": 12000000000
+            "gasPrice": 12000000000
         },
         null
     ]
