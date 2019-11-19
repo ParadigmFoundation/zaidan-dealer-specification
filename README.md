@@ -260,7 +260,7 @@ Defines information about an asset supported by a dealer implementation.
 
     | Name        | Schema | Required | JSON Type | Description                                                                                                                                                                   |
     | :---------- | :----- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `ticker`    | Ticker | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
+    | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
     | `name`      | -      | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
     | `decimals`  | -      | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
     | `networkId` | -      | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
@@ -291,10 +291,10 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
     | Name                | Schema    | Required | JSON Type | Description                                                                          |
     | :------------------ | :-------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
     | `marketId`          | -         | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
-    | `makerAssetTicker`  | Ticker    | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
-    | `takerAssetTickers` | Ticker[]  | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
-    | `tradeInfo`         | TradeInfo | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
-    | `quoteInfo`         | QuoteInfo | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
+    | `makerAssetTicker`  | [Ticker](#schema-ticker)    | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
+    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)>  | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
+    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo) | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
+    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo) | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
     | `metadata`          | -         | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
 
 -   **JSON Example**:
@@ -317,6 +317,12 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
         "metadata": {}
     }
     ```
+
+### Schema: `Order`
+
+A JSON representation of a dealer-signed [0x order.](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders)
+
+MUST be implemented according to the 0x specification. Operations with 0x order messages SHOULD be carried out with [official 0x libraries](https://github.com/0xProject/0x-monorepo) (Go implementations [here](https://github.com/0xProject/0x-mesh)).
 
 ### Schema: `Quote`
 
