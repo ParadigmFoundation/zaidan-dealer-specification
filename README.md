@@ -116,12 +116,23 @@ Implementations MAY choose what types of markets to support, to replicate more c
 
 Paginated methods MUST implement pagination in accordance with this section. If `page` is not specified, the default MUST be 0. The value for `perPage` MAY be implementation specific.
 
-Paginated methods MUST include two additional parameters in the `params` array or object (where `n` is the number of parameters the method accepts):
+Paginated methods MUST include two additional parameters in the `params` array or object (where `n` is the number of request parameters). The response parameters MUST match the table below.
 
-| Index   | Name      | JSON Type | Required | Default        | Description                                                                                             |
-| :------ | :-------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------ |
-| `n - 2` | `page`    | `number`  | `No`     | `0`            | The page number of the paginated results, where there are `perPage` items on each page.                 |
-| `n - 1` | `perPage` | `number`  | `No`     | Impl. specific | The number of items to include on each page (used by the server to calculate which results to include). |
+-   **Request parameters:**
+
+    | Index   | Name      | JSON Type | Required | Default        | Description                                                                                             |
+    | :------ | :-------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------ |
+    | `n - 2` | `page`    | Number    | `No`     | `0`            | The page number of the paginated results, where there are `perPage` items on each page.                 |
+    | `n - 1` | `perPage` | Number    | `No`     | Impl. specific | The number of items to include on each page (used by the server to calculate which results to include). |
+
+-   **Response parameters:**
+
+    | Index | Name      | JSON Type | Schema   | Description                                                     |
+    | :---- | :-------- | :-------- | :------- | :-------------------------------------------------------------- |
+    | `0`   | `records` | Array     | Array<T> | The array of matching record of schema T.                       |
+    | `1`   | `total`   | Number    | -        | The total matching records for the query (length of `records`). |
+    | `2`   | `page`    | Number    | -        | MUST match `page` request.                                      |
+    | `3`   | `perPage` | Number    | -        | MUST match `perPage` request.                                   |
 
 ## Errors
 
@@ -258,13 +269,13 @@ Defines information about an asset supported by a dealer implementation.
 
 -   **Fields**:
 
-    | Name        | Schema | Required | JSON Type | Description                                                                                                                                                                   |
-    | :---------- | :----- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | Name        | Schema                   | Required | JSON Type | Description                                                                                                                                                                   |
+    | :---------- | :----------------------- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
     | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
-    | `name`      | -      | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
-    | `decimals`  | -      | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
-    | `networkId` | -      | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
-    | `assetData` | -      | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
+    | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
+    | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
+    | `networkId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
+    | `assetData` | -                        | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
 
 -   **JSON Example**:
 
@@ -288,14 +299,14 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
 
 -   **Fields**:
 
-    | Name                | Schema    | Required | JSON Type | Description                                                                          |
-    | :------------------ | :-------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
-    | `marketId`          | -         | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
-    | `makerAssetTicker`  | [Ticker](#schema-ticker)    | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
-    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)>  | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
-    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo) | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
-    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo) | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
-    | `metadata`          | -         | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
+    | Name                | Schema                           | Required | JSON Type | Description                                                                          |
+    | :------------------ | :------------------------------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
+    | `marketId`          | -                                | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
+    | `makerAssetTicker`  | [Ticker](#schema-ticker)         | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
+    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)> | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
+    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo)   | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
+    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo)   | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
+    | `metadata`          | -                                | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
 
 -   **JSON Example**:
 
@@ -498,8 +509,8 @@ This method MUST return an empty array if no results match the query. Implementa
 
     | Index | Name      | JSON Type | Schema        | Description                                                     |
     | :---- | :-------- | :-------- | :------------ | :-------------------------------------------------------------- |
-    | `0`   | `assets`  | Array     | Array\<Asset> | The array of asset results that match the request parameters.   |
-    | `1`   | `items`   | Number    | -             | The number of results that matched the request (MAY be 0).      |
+    | `0`   | `records`  | Array     | Array\<Asset> | The array of asset results that match the request parameters.   |
+    | `1`   | `total`   | Number    | -             | The number of results that matched the request (MAY be 0).      |
     | `2`   | `page`    | Number    | -             | The page index of the result (MUST match request).              |
     | `3`   | `perPage` | Number    | -             | The number of items included on each page (MUST match request). |
 
@@ -531,8 +542,8 @@ This method MUST return an empty array if no results match the query. Implementa
     {
         "page": 0,
         "perPage": 2,
-        "items": 2,
-        "assets": [
+        "total": 2,
+        "records": [
             {
                 "ticker": "DAI",
                 "name": "DAI Stablecoin (v1.0)",
@@ -600,8 +611,8 @@ This method MUST return an empty array if no results match the query. Implementa
 
     | Index | Name      | JSON Type | Schema         | Description                                                    |
     | :---- | :-------- | :-------- | :------------- | :------------------------------------------------------------- |
-    | `0`   | `markets` | Array     | Array\<Market> | The array of market results that match the request parameters. |
-    | `1`   | `items`   | Number    | -              | The number of results that matched the request (MAY be 0).     |
+    | `0`   | `records` | Array     | Array\<Market> | The array of market results that match the request parameters. |
+    | `1`   | `total`   | Number    | -              | The number of results that matched the request (MAY be 0).     |
     | `2`   | `page`    | Number    | -              | The page index of the result (MUST match request).             |
     | `3`   | `perPage` | Number    | -              | The array of asset results that match the request parameters.  |
 
@@ -632,8 +643,8 @@ This method MUST return an empty array if no results match the query. Implementa
     {
         "page": 0,
         "perPage": 2,
-        "items": 2,
-        "markets": [
+        "total": 2,
+        "records": [
             {
                 "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
                 "makerAssetTicker": "WETH",
@@ -736,8 +747,8 @@ All other fields can be dynamically populated from 0x event logs based on a know
 
     | Index | Name      | JSON Type | Schema        | Description                                                            |
     | :---- | :-------- | :-------- | :------------ | :--------------------------------------------------------------------- |
-    | `0`   | `trades`  | Array     | Array\<Trade> | The array of trade results that match the request (MAY be all trades). |
-    | `1`   | `items`   | Number    | -             | The number of results that matched the request (MAY be 0).             |
+    | `0`   | `records`  | Array     | Array\<Trade> | The array of trade results that match the request (MAY be all trades). |
+    | `1`   | `total`   | Number    | -             | The number of results that matched the request (MAY be 0).             |
     | `2`   | `page`    | Number    | -             | The page index of the result (MUST match request).                     |
     | `3`   | `perPage` | Number    | -             | The array of asset results that match the request parameters.          |
 
@@ -773,7 +784,7 @@ All other fields can be dynamically populated from 0x event logs based on a know
         "page": 0,
         "perPage": 10,
         "items": 1,
-        "trades": [
+        "records": [
             {
                 "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
                 "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
