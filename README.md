@@ -86,11 +86,9 @@ traders are able to specify the `makerAsset`, `takerAsset`, and one of either `m
 
 Because there is no concept of a base or quote asset, quotes include no notion of price. Instead allowing clients to calculate the price in terms of either asset.
 
-Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. Consider the following requests.
+Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. Consider the following requests (syntax: `[ MAKER_ASSET, TAKER_ASSET, MAKER_SIZE, TAKER_SIZE ]`).
 
 ```json
-// [ MAKER_ASSET, TAKER_ASSET, MAKER_ASSET_SIZE, TAKER_ASSET_SIZE ]
-
 [
     ["DAI", "ZRX", null, 100000000000000000000],
     ["ZRX", "DAI", 100000000000000000000, null],
@@ -212,9 +210,9 @@ Defines information about quote parameters for a given market. Does NOT included
 
     | Name              | Schema | JSON Type | Description                                                                               |
     | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
-    | `minSize`         | -      | Number  | The minimum supported trade size, in base units of a market's maker asset.                |
-    | `maxSize`         | -      | Number  | The maximum supported trade size, in base units of a market's maker asset.                |
-    | `durationSeconds` | -      | Number  | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
+    | `minSize`         | -      | Number    | The minimum supported trade size, in base units of a market's maker asset.                |
+    | `maxSize`         | -      | Number    | The maximum supported trade size, in base units of a market's maker asset.                |
+    | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
 
 -   **JSON Example**:
 
@@ -833,10 +831,11 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
 
 -   **Response fields:**
 
-    | Index | Name    | JSON Type | Schema                 | Description                                               |
-    | :---- | :------ | :-------- | :--------------------- | :-------------------------------------------------------- |
-    | `0`   | `quote` | Object    | [Quote](#schema-quote) | A quote (offer) for the specified values from the client. |
-    | `1`   | `extra` | Object    | -                      | OPTIONAL extra structured data relevant to this offer.    |
+    | Index | Name        | JSON Type | Schema                         | Description                                               |
+    | :---- | :---------- | :-------- | :----------------------------- | :-------------------------------------------------------- |
+    | `0`   | `quote`     | Object    | [Quote](#schema-quote)         | A quote (offer) for the specified values from the client. |
+    | `1`   | `tradeInfo` | Object    | [TradeInfo](#schema-tradeinfo) | Settlement information (e.g. gas price).                  |
+    | `1`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
 
 -   **Errors:**
 
@@ -881,10 +880,15 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
 
     ```json
     {
+        "tradeInfo": {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPriceWei": 12000000000
+        },
         "quote": {
             "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-            "makerAssetData": "ZRX",
-            "takerAssetData": "DAI",
+            "makerAssetTicker": "ZRX",
+            "takerAssetTicker": "DAI",
             "makerAssetSize": 1435000000000000000,
             "takerAssetSize": 300000000000000000,
             "expiration": 1573775025,
@@ -915,8 +919,8 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     [
         {
             "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-            "makerAssetData": "ZRX",
-            "takerAssetData": "DAI",
+            "makerAssetTicker": "ZRX",
+            "takerAssetTicker": "DAI",
             "makerAssetSize": 1435000000000000000,
             "takerAssetSize": 300000000000000000,
             "expiration": 1573775025,
@@ -939,7 +943,13 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
                 "makerFeeAssetData": "0x",
                 "takerFeeAssetData": "0x"
             }
-        }
+        },
+        {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPriceWei": 12000000000
+        },
+        null
     ]
     ```
 
