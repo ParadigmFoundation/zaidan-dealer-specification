@@ -254,7 +254,7 @@ Implementations MAY provide additional fields in this schema (such as a link to 
 
 Defines information about an asset supported by a dealer implementation.
 
--   Fields:
+-   **Fields**:
 
     | Name        | Schema | Required | JSON Type | Description                                                                                                                                                                   |
     | :---------- | :----- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -264,7 +264,7 @@ Defines information about an asset supported by a dealer implementation.
     | `networkId` | -      | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
     | `assetData` | -      | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
 
--   JSON Example:
+-   **JSON Example**:
 
     ```json
     {
@@ -284,7 +284,7 @@ The concept of a base and quote asset are intentionally omitted, and left for de
 
 Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as shown in the example are OPTIONAL).
 
--   Fields:
+-   **Fields**:
 
     | Name                | Schema    | Required | JSON Type | Description                                                                          |
     | :------------------ | :-------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
@@ -295,7 +295,7 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
     | `quoteInfo`         | QuoteInfo | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
     | `metadata`          | -         | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
 
--   JSON Example:
+-   **JSON Example**:
 
     ```json
     {
@@ -322,7 +322,7 @@ Defines a price quote from a dealer for a given maker and taker asset, and other
 
 Implementations MAY use the `validityParameters` field to specify custom "soft cancel" parameters for served quotes.
 
--   Fields:
+-   **Fields**:
 
     | Name                 | Schema                    | Required | JSON Type | Description                                                                                                                                                                                |
     | :------------------- | :------------------------ | :------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -337,7 +337,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `fillTx`             | -                         | `No`     | String    | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
     | `validityParameters` | Array\<ValidityParameter> | `No`     | Array     | OPTIONAL implementation-specific "soft-cancel" parameters for this offer.                                                                                                                  |
 
--   JSON Example:
+-   **JSON Example**:
 
     ```json
     {
@@ -379,7 +379,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
 
 Defines a past (settled) trade from a dealer.
 
--   Fields:
+-   **Fields**:
 
     | Name               | Schema                   | Required | JSON Type | Description                                                           |
     | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
@@ -394,7 +394,7 @@ Defines a past (settled) trade from a dealer.
     | `makerAssetAmount` | -                        | `Yes`    | Number    | The amount of the maker asset transacted in the trade.                |
     | `takerAssetAmount` | -                        | `Yes`    | Number    | The amount of the taker asset transacted in the trade.                |
 
--   JSON Example:
+-   **JSON Example**:
 
     ```json
     {
