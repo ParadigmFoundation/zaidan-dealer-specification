@@ -10,6 +10,8 @@ Methods under the `dealer` namespace (with the `dealer_` prefix) comprise the pu
 
 The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or other transports at the discretion of implementers (see notes).
 
+Be sure to see important notes and resources in [the appendix.](#appendix)
+
 ### Conventions
 
 -   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/rfc/rfc2119.txt).
