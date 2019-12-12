@@ -351,6 +351,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `makerAssetSize`     | -                         | `Yes`    | Number    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
     | `quoteAssetSize`     | -                         | `Yes`    | Number    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
     | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
+    | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization. 
     | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
     | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
     | `fillTx`             | -                         | `No`     | String    | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
@@ -366,6 +367,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
         "makerAssetSize": 100000000000000000000,
         "takerAssetSize": 300000000000000000,
         "expiration": 1573775025,
+        "serverTime": 1573775014.2231,
         "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
         "order": {
             "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
@@ -911,6 +913,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
             "makerAssetSize": 1435000000000000000,
             "takerAssetSize": 300000000000000000,
             "expiration": 1573775025,
+            "serverTime": 1573775014.2231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
             "order": {
                 "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
@@ -943,6 +946,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
             "makerAssetSize": 1435000000000000000,
             "takerAssetSize": 300000000000000000,
             "expiration": 1573775025,
+            "serverTime": 1573775014.2231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
             "order": {
                 "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
