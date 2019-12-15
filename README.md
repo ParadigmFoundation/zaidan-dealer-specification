@@ -877,7 +877,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         "makerAssetTicker": "ZRX",
         "takerAssetTicker": "DAI",
         "makerAssetSize": 1435000000000000000,
-        "takerAddress": "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459",
+        "takerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
         "includeOrder": true,
         "includeTx": false
     }
@@ -889,7 +889,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         "DAI",
         1435000000000000000,
         null,
-        "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459"
+        "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
         true,
         false
     ]
