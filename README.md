@@ -57,7 +57,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
 -   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
--   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network (not yet deployed).
+-   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
 -   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
@@ -84,7 +84,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 Dealer implementations use the [0x contract system](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md) for asset settlement, and as such, the trading interface provided by the Dealer API is designed to foster helpful abstractions over the underlying settlement system.
 
 For this reason, instead of providing a currency pair (base/quote and price denominated markets) interface for quote requests,
-traders are able to specify the `makerAsset`, `takerAsset`, and one of either `makerAssetSize` or `takerAssetSize` (the other provided by the dealer as the quote). Price can then be calculated in terms of either asset at higher levels depending on the use case. Similarly, all asset sizes included in requests and responses from the dealer MUST be in integer base units.
+traders are able to specify the `makerAsset`, `takerAsset`, and one of either `makerAssetSize` or `takerAssetSize` (the other is provided by the dealer as the quote). Price can then be calculated in terms of either asset at higher levels depending on the use case. Similarly, all asset sizes included in requests and responses from the dealer MUST be in integer base units.
 
 Because there is no concept of a base or quote asset, quotes include no notion of price. Instead allowing clients to calculate the price in terms of either asset.
 
@@ -195,7 +195,7 @@ A universally unique identifier (UUID), according to UUID version 4.0 as a Strin
 
 Defines information about trades – settlement transactions sent to the 0x exchange contract.
 
-Implementations MAY included implementation-specific fields in this section.
+Implementations MAY include implementation-specific fields in this section.
 
 The value for `gasPrice` MUST match the value ultimately included in any 0x [fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) by dealer implementations for a given market.
 
@@ -847,7 +847,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     | `3`   | `takerAssetSize`   | Number    | `No`     | `null`            | Client MUST specify either this or `makerAssetSize`.                                                                                                                                      |
     | `4`   | `takerAddress`     | String    | `No`     | (See [3](#notes)) | The address of the taker that will fill the requested quote (see 4).                                                                                                                      |
     | `5`   | `includeOrder`     | Boolean   | `No`     | `true`            | If `true`, the quote MUST include a signed 0x order for the offer (5).                                                                                                                    |
-    | `6`   | `includeTx`        | Boolean   | `No`     | `false`           | If `true`, the quote MUST included the [ABIv2 encoded fill transaction data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) (6). |
+    | `6`   | `includeTx`        | Boolean   | `No`     | `false`           | If `true`, the quote MUST include the [ABIv2 encoded fill transaction data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) (6). |
     | `7`   | `extra`            | Object    | `No`     | `null`            | Optional extra structured data from the taker. MAY be omitted by implementations.                                                                                                         |
 
 -   **Response fields:**
@@ -879,7 +879,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         "makerAssetTicker": "ZRX",
         "takerAssetTicker": "DAI",
         "makerAssetSize": 1435000000000000000,
-        "takerAddress": "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459",
+        "takerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
         "includeOrder": true,
         "includeTx": false
     }
@@ -891,7 +891,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         "DAI",
         1435000000000000000,
         null,
-        "0xcefc94F1C0a0bE7aD47c7fD961197738fC233459"
+        "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
         true,
         false
     ]
@@ -1126,7 +1126,7 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
 1. This definition of a market makes an intentional departure from conventional currency-pair based markets in which their is a single quote asset and a single base asset. Defining only the maker and taker assets for a market allows greater flexibility for implementers, and allows pricing to be defined in terms of either asset at higher levels.
 1. If the dealer is operating on the main Ethereum network, they MUST treat the `networkID` of `1` as the Ethereum mainnet, as specified in EIP-155. Private and test networks may use any network ID, but SHOULD use conventions established by public test networks (e.g. Ropsten is 3).
 1. The default value SHOULD be the null address (20 null bytes) represented as a hex string. Implementations MAY require takers to specify a `takerAddress`.
-1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `includeOrder` as `false can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
+1. If a client requests a quote without an order, implementations MAY allow the client to get the order at a later time with a separate method. Quotes indicated as `includeOrder` as `false` can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
     - Implementations MAY treat these types of quotes separately in internal tracking and/or pricing mechanisms.
 1. This feature is desirable for some users as it opens the door for clients to sign fill transactions with lower-level cryptographic primitives, rather than require the generally larger libraries required to prepare the fill transaction data from the order itself.
 
