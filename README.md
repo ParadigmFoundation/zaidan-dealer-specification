@@ -171,9 +171,10 @@ Implementation MAY use arbitrary mechanisms to determine a taker's authorization
 
 -   **Errors:**
 
-    | Code     | Description            | Notes                                           |
-    | :------- | :--------------------- | :---------------------------------------------- |
-    | `-42001` | Invalid taker address. | Returned when an address is invalid or missing. |
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-42001` | Invalid taker address.      | Returned when an address is invalid or missing.                                      |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
 -   **Example request bodies:**
 
@@ -232,11 +233,12 @@ This method MUST return an empty array if no results match the query. Implementa
 
 -   **Errors:**
 
-    | Code     | Description               | Notes                                                              |
-    | :------- | :------------------------ | :----------------------------------------------------------------- |
-    | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested.   |
-    | `-42003` | Invalid asset address.    | Returned when an invalid Ethereum address is provided.             |
-    | `-42004` | Invalid asset data.       | Returned when malformed ABIv2 asset data is included in a request. |
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested.                     |
+    | `-42003` | Invalid asset address.      | Returned when an invalid Ethereum address is provided.                               |
+    | `-42004` | Invalid asset data.         | Returned when malformed ABIv2 asset data is included in a request.                   |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
 -   **Example request bodies:**
 
@@ -334,9 +336,10 @@ This method MUST return an empty array if no results match the query. Implementa
 
 -   **Errors:**
 
-    | Code     | Description               | Notes                                                            |
-    | :------- | :------------------------ | :--------------------------------------------------------------- |
-    | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested. |
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested.                     |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
 -   **Example request bodies:**
 
@@ -470,14 +473,15 @@ All other fields can be dynamically populated from 0x event logs based on a know
 
 -   **Errors:**
 
-    | Code     | Description               | Notes                                                                             |
-    | :------- | :------------------------ | :-------------------------------------------------------------------------------- |
-    | `-32603` | Internal error.           | Internal JSON-RPC error. MAY be used as generic internal error code.              |
-    | `-42002` | Invalid filter selection. | Returned when conflicting or incompatible filters are requested.                  |
-    | `-42003` | Invalid address.          | Returned when an invalid Ethereum address is provided.                            |
-    | `-42021` | Invalid transaction ID.   | Available to indicate an invalid transaction hash in a request.                   |
-    | `-42022` | Invalid order hash.       | Available to indicate an order transaction hash in a request.                     |
-    | `-42023` | Invalid UUID.             | Available to indicate failure to validate a universally unique identifier (UUID). |
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
+    | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested.                     |
+    | `-42003` | Invalid address.            | Returned when an invalid Ethereum address is provided.                               |
+    | `-42021` | Invalid transaction ID.     | Available to indicate an invalid transaction hash in a request.                      |
+    | `-42022` | Invalid order hash.         | Available to indicate an order transaction hash in a request.                        |
+    | `-42023` | Invalid UUID.               | Available to indicate failure to validate a universally unique identifier (UUID).    |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
 *   **Example request bodies:**
 
@@ -584,6 +588,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     | `-42011` | Quote too large.                    | Occurs when a quote would exceed the market maximum or the dealer's balance.               |
     | `-42012` | Quote too small.                    | Occurs when a quote would be smaller than the market's minimum size.                       |
     | `-42013` | Quote unavailable at this time.     | Reserved for various states where dealers may not be serving quotes.                       |
+    | `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.       |
 
 -   **Example request bodies:**
 
@@ -726,6 +731,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | `-42019` | Insufficient taker allowance. | Available to indicate specific validation failure.                                                |
     | `-42020` | Quote validation failure.     | Available to indicate implementation-specific failures of extra quote data.                       |
     | `-42023` | Invalid UUID.                 | Available to indicate failure to validate a universally unique identifier (UUID).                 |
+    | `-42024` | Request rate limit reached.   | Available to indicate a implementation-specific request rate limit has been reached.              |
 
 *   **Example request bodies:**
 
@@ -786,9 +792,10 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
 
 -   **Errors:**
 
-    | Code     | Description     | Notes                                                                |
-    | :------- | :-------------- | :------------------------------------------------------------------- |
-    | `-32603` | Internal error. | Internal JSON-RPC error. MAY be used as generic internal error code. |
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
 *   **Example request bodies:**
 
@@ -1151,3 +1158,4 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42021` | Invalid transaction ID.             | Available to indicate an invalid transaction hash in a request.                                   |
 | `-42022` | Invalid order hash.                 | Available to indicate an order transaction hash in a request.                                     |
 | `-42023` | Invalid UUID.                       | Available to indicate failure to validate a universally unique identifier (UUID).                 |
+| `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.              |
