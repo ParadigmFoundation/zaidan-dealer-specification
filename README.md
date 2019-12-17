@@ -26,6 +26,14 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
 -   [Quotes](#quotes)
 -   [Pagination](#pagination)
 -   [Errors](#errors)
+-   [Methods](#methods)
+    -   [AuthStatus](#method-dealer_authstatus)
+    -   [GetAssets](#method-dealer_getassets)
+    -   [GetMarkets](#method-dealer_getmarkets)
+    -   [GetPastTrades](#method-dealer_getpasttrades)
+    -   [GetQuote](#method-dealer_getquote)
+    -   [SubmitFill](#method-dealer_submitfill)
+    -   [Time](#method-dealer_time)
 -   [Schemas](#schemas)
     -   [Ticker](#schema-ticker)
     -   [Time](#schema-time)
@@ -36,14 +44,6 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
     -   [Market](#schema-market)
     -   [Quote](#schema-quote)
     -   [Trade](#schema-trade)
--   [Methods](#methods)
-    -   [AuthStatus](#method-dealer_authstatus)
-    -   [GetAssets](#method-dealer_getassets)
-    -   [GetMarkets](#method-dealer_getmarkets)
-    -   [GetPastTrades](#method-dealer_getpasttrades)
-    -   [GetQuote](#method-dealer_getquote)
-    -   [SubmitFill](#method-dealer_submitfill)
-    -   [Time](#method-dealer_time)
 -   [Appendix](#appendix)
     -   [Notes](#notes)
     -   [Important resources](#important-resources)
@@ -145,292 +145,6 @@ Implementations MAY add their own error codes and messages, and may use the `dat
 Implementations MUST only adhere to the defined codes for the defined scenarios. The exact message text MAY not match the specification exactly, and implementations MAY omit certain specified codes.
 
 Implementations MUST NOT used any defined error code to mean something contrary to what the specification defines.
-
-## Schemas
-
-Schematics and data structures used in the public API (JSON shown).
-
-Fields indicated `Yes` in the `Required` column for each scheme MUST be implemented, while fields indicated `No` MAY be omitted.
-
-All schemas in this section MUST be supported to the degree indicated in each section.
-
-### Schema: `Ticker`
-
-An asset's shorthand String representation.
-
-No limitation is placed on tickers by the specification, but implementations SHOULD keep an asset's `Ticker` consistent with established conventions for that asset on it's corresponding network (e.g. DAI, WETH, etc.).
-
-This value SHOULD come from the [ERC-20 `symbol`](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md#symbol) method if implemented and logical for each supported asset.
-
--   **JSON Example:**
-
-    ```json
-    "ZRX"
-    ```
-
-### Schema: `Time`
-
-All times are specified in seconds since the UNIX epoch as a Number.
-
-Implementations MAY choose the level of time precision (decimals), which MUST be consistent across the public API.
-
-If an implementation provides sub-second precision for timing, the decimal place and trailing zeros MAY be omitted if applicable.
-
--   **JSON Example:**
-
-    ```json
-    1573774183.1353
-    ```
-
-### Schema: `UUID`
-
-A universally unique identifier (UUID), according to UUID version 4.0 as a String.
-
--   **JSON Example:**
-    ```
-    "bafa9565-598d-413a-80d3-7ec3b7e24a08"
-    ```
-
-### Schema: `TradeInfo`
-
-Defines information about trades – settlement transactions sent to the 0x exchange contract.
-
-Implementations MAY include implementation-specific fields in this section.
-
-The value for `gasPrice` MUST match the value ultimately included in any 0x [fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) by dealer implementations for a given market.
-
--   **Fields**:
-
-    | Name       | Schema | JSON Type | Description                                                                                   |
-    | :--------- | :----- | :-------- | :-------------------------------------------------------------------------------------------- |
-    | `gasLimit` | -      | Number    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
-    | `gasPrice` | -      | Number    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "gasLimit": 210000,
-        "gasPrice": 12000000000
-    }
-    ```
-
-### Schema: `QuoteInfo`
-
-Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) for individual quotes.
-
--   **Fields**:
-
-    | Name              | Schema | JSON Type | Description                                                                               |
-    | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
-    | `minSize`         | -      | Number    | The minimum supported trade size, in base units of a market's maker asset.                |
-    | `maxSize`         | -      | Number    | The maximum supported trade size, in base units of a market's maker asset.                |
-    | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "minSize": 100000000000000,
-        "maxSize": 10000000000000000000000000,
-        "durationSeconds": 15
-    }
-    ```
-
-### Schema: `ValidityParameter`
-
-An implementation-specific quote validation parameter used to enforce "soft cancels" (rejection to fill quotes).
-
-These parameters are NOT cryptographically enforced, and MAY be used by implementations to enforce custom "soft" cancellation parameters.
-
-Implementations MAY provide additional fields in this schema (such as a link to a price feed, etc.).
-
--   Fields:
-
-    | Name    | Schema | JSON Type | Description                                          |
-    | :------ | :----- | :-------- | :--------------------------------------------------- |
-    | `name`  | -      | String    | The name of the validation parameter.                |
-    | `value` | -      | Any       | The enforced value (MAY be primitive or structured). |
-
--   **JSON Example**:
-
-    This example may indicate to a trader that the dealer will only fill the quote if the ETH/USD price on Coinbase is above 176.25 USD.
-
-    ```json
-    {
-        "name": "cb-eth-usd-price-above",
-        "value": 176.25
-    }
-    ```
-
-### Schema: `Asset`
-
-Defines information about an asset supported by a dealer implementation.
-
--   **Fields**:
-
-    | Name        | Schema                   | Required | JSON Type | Description                                                                                                                                                                   |
-    | :---------- | :----------------------- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
-    | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
-    | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
-    | `networkId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
-    | `assetData` | -                        | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "ticker": "DAI",
-        "name": "DAI Stablecoin (v1.0)",
-        "decimals": 18,
-        "networkId": 1,
-        "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359"
-    }
-    ```
-
-### Schema: `Market`
-
-Defines a market: a trading venue that supports a maker asset (provided by the dealer) and at least one taker asset (provided by the trader).
-
-The concept of a base and quote asset are intentionally omitted, and left for definition at higher levels based on the trading and market scenario.
-
-Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as shown in the example are OPTIONAL).
-
--   **Fields**:
-
-    | Name                | Schema                           | Required | JSON Type | Description                                                                          |
-    | :------------------ | :------------------------------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
-    | `marketId`          | -                                | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
-    | `makerAssetTicker`  | [Ticker](#schema-ticker)         | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
-    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)> | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
-    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo)   | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
-    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo)   | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
-    | `metadata`          | -                                | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-        "makerAssetTicker": "WETH",
-        "takerAssetTickers": ["DAI", "USDC", "MKR", "ZRX"],
-        "tradeInfo": {
-            "networkId": 1,
-            "gasLimit": 210000,
-            "gasPrice": 12000000000
-        },
-        "quoteInfo": {
-            "minSize": 100000000000000,
-            "maxSize": 10000000000000000000000000,
-            "durationSeconds": 15
-        },
-        "metadata": {}
-    }
-    ```
-
-### Schema: `Order`
-
-A JSON representation of a dealer-signed [0x order.](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders)
-
-MUST be implemented according to the 0x specification. Operations with 0x order messages SHOULD be carried out with [official 0x libraries](https://github.com/0xProject/0x-monorepo) (Go implementations [here](https://github.com/0xProject/0x-mesh)).
-
-### Schema: `Quote`
-
-Defines a price quote from a dealer for a given maker and taker asset, and other quote parameters.
-
-Implementations MAY use the `validityParameters` field to specify custom "soft cancel" parameters for served quotes.
-
--   **Fields**:
-
-    | Name                 | Schema                    | Required | JSON Type | Description                                                                                                                                                                                |
-    | :------------------- | :------------------------ | :------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `quoteId`            | [UUID](#schema-uuid)      | `Yes`    | String    | A UUID (v4) that MUST correspond to this offer only.                                                                                                                                       |
-    | `makerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's maker asset (see [quotes](#quotes)).                                                                                                                       |
-    | `takerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)).                                                                                                                       |
-    | `makerAssetSize`     | -                         | `Yes`    | Number    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
-    | `quoteAssetSize`     | -                         | `Yes`    | Number    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
-    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
-    | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization. 
-    | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
-    | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
-    | `fillTx`             | -                         | `No`     | String    | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
-    | `validityParameters` | Array\<ValidityParameter> | `No`     | Array     | OPTIONAL implementation-specific "soft-cancel" parameters for this offer.                                                                                                                  |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "makerAssetTicker": "ZRX",
-        "takerAssetTicker": "WETH",
-        "makerAssetSize": 100000000000000000000,
-        "takerAssetSize": 300000000000000000,
-        "expiration": 1573775025,
-        "serverTime": 1573775014.2231,
-        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-        "order": {
-            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-            "feeRecipientAddress": "0x",
-            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-            "makerAssetAmount": "100000000000000000000",
-            "takerAssetAmount": "300000000000000000",
-            "makerFee": "0",
-            "takerFee": "0",
-            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
-            "expirationTimeSeconds": "1573790025",
-            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
-            "salt": "1572620203025",
-            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
-            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            "makerFeeAssetData": "0x",
-            "takerFeeAssetData": "0x"
-        },
-        "validityParameters": [
-            {
-                "name": "coinbase-pro-eth-usd-above",
-                "value": 178.88
-            }
-        ]
-    }
-    ```
-
-### Schema: `Trade`
-
-Defines a past (settled) trade from a dealer.
-
--   **Fields**:
-
-    | Name               | Schema                   | Required | JSON Type | Description                                                           |
-    | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
-    | `quoteId`          | [UUID](#schema-uuid)     | `Yes`    | String    | The ID of the original quote that was filled in a trade.              |
-    | `marketId`         | -                        | `Yes`    | String    | Implementation-specific ID corresponding to the correct market.       |
-    | `orderHash`        | -                        | `Yes`    | String    | The 0x order hash of the order filled in a trade.                     |
-    | `transactionHash`  | -                        | `Yes`    | String    | The Ethereum transaction hash (transaction ID) of fill.               |
-    | `takerAddress`     | -                        | `Yes`    | String    | The Ethereum address of the taker who requested and filled the quote. |
-    | `timestamp`        | [Time](#schema-time)     | `Yes`    | Number    | The UNIX timestamp the fill was submitted (or mined) at.              |
-    | `makerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's maker asset.                                |
-    | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's taker asset.                                |
-    | `makerAssetAmount` | -                        | `Yes`    | Number    | The amount of the maker asset transacted in the trade.                |
-    | `takerAssetAmount` | -                        | `Yes`    | Number    | The amount of the taker asset transacted in the trade.                |
-
--   **JSON Example**:
-
-    ```json
-    {
-        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-        "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-        "timestamp": 1574108114.3301,
-        "makerAssetTicker": "WETH",
-        "takerAssetTicker": "DAI",
-        "makerAssetAmount": 883000000000000000,
-        "takerAssetAmount": 143500000000000000000
-    }
-    ```
 
 ## Methods
 
@@ -1111,6 +825,293 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     ```json
     [1574108764.2118, 0.1099]
     ```
+
+## Schemas
+
+Schematics and data structures used in the public API (JSON shown).
+
+Fields indicated `Yes` in the `Required` column for each scheme MUST be implemented, while fields indicated `No` MAY be omitted.
+
+All schemas in this section MUST be supported to the degree indicated in each section.
+
+### Schema: `Ticker`
+
+An asset's shorthand String representation.
+
+No limitation is placed on tickers by the specification, but implementations SHOULD keep an asset's `Ticker` consistent with established conventions for that asset on it's corresponding network (e.g. DAI, WETH, etc.).
+
+This value SHOULD come from the [ERC-20 `symbol`](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md#symbol) method if implemented and logical for each supported asset.
+
+-   **JSON Example:**
+
+    ```json
+    "ZRX"
+    ```
+
+### Schema: `Time`
+
+All times are specified in seconds since the UNIX epoch as a Number.
+
+Implementations MAY choose the level of time precision (decimals), which MUST be consistent across the public API.
+
+If an implementation provides sub-second precision for timing, the decimal place and trailing zeros MAY be omitted if applicable.
+
+-   **JSON Example:**
+
+    ```json
+    1573774183.1353
+    ```
+
+### Schema: `UUID`
+
+A universally unique identifier (UUID), according to UUID version 4.0 as a String.
+
+-   **JSON Example:**
+    ```
+    "bafa9565-598d-413a-80d3-7ec3b7e24a08"
+    ```
+
+### Schema: `TradeInfo`
+
+Defines information about trades – settlement transactions sent to the 0x exchange contract.
+
+Implementations MAY include implementation-specific fields in this section.
+
+The value for `gasPrice` MUST match the value ultimately included in any 0x [fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) by dealer implementations for a given market.
+
+-   **Fields**:
+
+    | Name       | Schema | JSON Type | Description                                                                                   |
+    | :--------- | :----- | :-------- | :-------------------------------------------------------------------------------------------- |
+    | `gasLimit` | -      | Number    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
+    | `gasPrice` | -      | Number    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "gasLimit": 210000,
+        "gasPrice": 12000000000
+    }
+    ```
+
+### Schema: `QuoteInfo`
+
+Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) for individual quotes.
+
+-   **Fields**:
+
+    | Name              | Schema | JSON Type | Description                                                                               |
+    | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
+    | `minSize`         | -      | Number    | The minimum supported trade size, in base units of a market's maker asset.                |
+    | `maxSize`         | -      | Number    | The maximum supported trade size, in base units of a market's maker asset.                |
+    | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "minSize": 100000000000000,
+        "maxSize": 10000000000000000000000000,
+        "durationSeconds": 15
+    }
+    ```
+
+### Schema: `ValidityParameter`
+
+An implementation-specific quote validation parameter used to enforce "soft cancels" (rejection to fill quotes).
+
+These parameters are NOT cryptographically enforced, and MAY be used by implementations to enforce custom "soft" cancellation parameters.
+
+Implementations MAY provide additional fields in this schema (such as a link to a price feed, etc.).
+
+-   Fields:
+
+    | Name    | Schema | JSON Type | Description                                          |
+    | :------ | :----- | :-------- | :--------------------------------------------------- |
+    | `name`  | -      | String    | The name of the validation parameter.                |
+    | `value` | -      | Any       | The enforced value (MAY be primitive or structured). |
+
+-   **JSON Example**:
+
+    This example may indicate to a trader that the dealer will only fill the quote if the ETH/USD price on Coinbase is above 176.25 USD.
+
+    ```json
+    {
+        "name": "cb-eth-usd-price-above",
+        "value": 176.25
+    }
+    ```
+
+### Schema: `Asset`
+
+Defines information about an asset supported by a dealer implementation.
+
+-   **Fields**:
+
+    | Name        | Schema                   | Required | JSON Type | Description                                                                                                                                                                   |
+    | :---------- | :----------------------- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
+    | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
+    | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
+    | `networkId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
+    | `assetData` | -                        | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "ticker": "DAI",
+        "name": "DAI Stablecoin (v1.0)",
+        "decimals": 18,
+        "networkId": 1,
+        "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359"
+    }
+    ```
+
+### Schema: `Market`
+
+Defines a market: a trading venue that supports a maker asset (provided by the dealer) and at least one taker asset (provided by the trader).
+
+The concept of a base and quote asset are intentionally omitted, and left for definition at higher levels based on the trading and market scenario.
+
+Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as shown in the example are OPTIONAL).
+
+-   **Fields**:
+
+    | Name                | Schema                           | Required | JSON Type | Description                                                                          |
+    | :------------------ | :------------------------------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
+    | `marketId`          | -                                | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
+    | `makerAssetTicker`  | [Ticker](#schema-ticker)         | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
+    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)> | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
+    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo)   | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
+    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo)   | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
+    | `metadata`          | -                                | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+        "makerAssetTicker": "WETH",
+        "takerAssetTickers": ["DAI", "USDC", "MKR", "ZRX"],
+        "tradeInfo": {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPrice": 12000000000
+        },
+        "quoteInfo": {
+            "minSize": 100000000000000,
+            "maxSize": 10000000000000000000000000,
+            "durationSeconds": 15
+        },
+        "metadata": {}
+    }
+    ```
+
+### Schema: `Order`
+
+A JSON representation of a dealer-signed [0x order.](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders)
+
+MUST be implemented according to the 0x specification. Operations with 0x order messages SHOULD be carried out with [official 0x libraries](https://github.com/0xProject/0x-monorepo) (Go implementations [here](https://github.com/0xProject/0x-mesh)).
+
+### Schema: `Quote`
+
+Defines a price quote from a dealer for a given maker and taker asset, and other quote parameters.
+
+Implementations MAY use the `validityParameters` field to specify custom "soft cancel" parameters for served quotes.
+
+-   **Fields**:
+
+    | Name                 | Schema                    | Required | JSON Type | Description                                                                                                                                                                                |
+    | :------------------- | :------------------------ | :------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `quoteId`            | [UUID](#schema-uuid)      | `Yes`    | String    | A UUID (v4) that MUST correspond to this offer only.                                                                                                                                       |
+    | `makerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's maker asset (see [quotes](#quotes)).                                                                                                                       |
+    | `takerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)).                                                                                                                       |
+    | `makerAssetSize`     | -                         | `Yes`    | Number    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
+    | `quoteAssetSize`     | -                         | `Yes`    | Number    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
+    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
+    | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization. 
+    | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
+    | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
+    | `fillTx`             | -                         | `No`     | String    | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
+    | `validityParameters` | Array\<ValidityParameter> | `No`     | Array     | OPTIONAL implementation-specific "soft-cancel" parameters for this offer.                                                                                                                  |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "makerAssetTicker": "ZRX",
+        "takerAssetTicker": "WETH",
+        "makerAssetSize": 100000000000000000000,
+        "takerAssetSize": 300000000000000000,
+        "expiration": 1573775025,
+        "serverTime": 1573775014.2231,
+        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+        "order": {
+            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+            "feeRecipientAddress": "0x",
+            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "makerAssetAmount": "100000000000000000000",
+            "takerAssetAmount": "300000000000000000",
+            "makerFee": "0",
+            "takerFee": "0",
+            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+            "expirationTimeSeconds": "1573790025",
+            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+            "salt": "1572620203025",
+            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "makerFeeAssetData": "0x",
+            "takerFeeAssetData": "0x"
+        },
+        "validityParameters": [
+            {
+                "name": "coinbase-pro-eth-usd-above",
+                "value": 178.88
+            }
+        ]
+    }
+    ```
+
+### Schema: `Trade`
+
+Defines a past (settled) trade from a dealer.
+
+-   **Fields**:
+
+    | Name               | Schema                   | Required | JSON Type | Description                                                           |
+    | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
+    | `quoteId`          | [UUID](#schema-uuid)     | `Yes`    | String    | The ID of the original quote that was filled in a trade.              |
+    | `marketId`         | -                        | `Yes`    | String    | Implementation-specific ID corresponding to the correct market.       |
+    | `orderHash`        | -                        | `Yes`    | String    | The 0x order hash of the order filled in a trade.                     |
+    | `transactionHash`  | -                        | `Yes`    | String    | The Ethereum transaction hash (transaction ID) of fill.               |
+    | `takerAddress`     | -                        | `Yes`    | String    | The Ethereum address of the taker who requested and filled the quote. |
+    | `timestamp`        | [Time](#schema-time)     | `Yes`    | Number    | The UNIX timestamp the fill was submitted (or mined) at.              |
+    | `makerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's maker asset.                                |
+    | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's taker asset.                                |
+    | `makerAssetAmount` | -                        | `Yes`    | Number    | The amount of the maker asset transacted in the trade.                |
+    | `takerAssetAmount` | -                        | `Yes`    | Number    | The amount of the taker asset transacted in the trade.                |
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
+        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
+        "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+        "timestamp": 1574108114.3301,
+        "makerAssetTicker": "WETH",
+        "takerAssetTicker": "DAI",
+        "makerAssetAmount": 883000000000000000,
+        "takerAssetAmount": 143500000000000000000
+    }
+    ```
+
 
 ## Appendix
 
