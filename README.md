@@ -1152,7 +1152,7 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42015` | Unknown quote.                      | Available to allow implementations differentiate expired from never-quoted.                       |
 | `-42016` | Order already filled.               | Available to allow implementations to indicate specific double-fill attempts.                     |
 | `-42017` | Fill validation failed.             | Available to indicate current chain state simulation validation failure.                          |
-| `-42019` | Insufficient taker balance.         | Available to indicate specific validation failure.                                                |
+| `-42018` | Insufficient taker balance.         | Available to indicate specific validation failure.                                                |
 | `-42019` | Insufficient taker allowance.       | Available to indicate specific validation failure.                                                |
 | `-42020` | Quote validation failure.           | Available to indicate implementation-specific failures of extra quote data.                       |
 | `-42021` | Invalid transaction ID.             | Available to indicate an invalid transaction hash in a request.                                   |
