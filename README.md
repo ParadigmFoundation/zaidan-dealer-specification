@@ -705,7 +705,8 @@ To subscribe to multiple markets with different maker and taker assets, multiple
         "426dbcf8-1d84-405c-978f-454beb1566b8",
         [
             {
-                "id": "1e342bd7-6dca-4cbe-9a91-7466e595206c",
+                "stubId": "1e342bd7-6dca-4cbe-9a91-7466e595206c",
+                "lastId": "c45cfe59-df72-410b-a087-cc012d174d3d",
                 "makerAsset": "WETH",
                 "takerAsset": "ZRX",
                 "makerSizeRequest": [1000000000000000, 10000000000000000000],
@@ -714,7 +715,8 @@ To subscribe to multiple markets with different maker and taker assets, multiple
                 "takerSizeBand": [5300000000000000000000, 6500000000000000000000]
             },
             {
-                "id": "3efff541-135a-4be8-9da7-f310d5338b1c",
+                "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
+                "lastId": "cba7638e-b27a-46b3-a003-17d823272291",
                 "makerAsset": "WETH",
                 "takerAsset": "DAI",
                 "makerSizeRequest": [1000000000000000, 10000000000000000000],
@@ -736,7 +738,7 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
 
     | Index | Name         | JSON Type | Required | Default | Description                                                 |
     | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
-    | `0`   | `id` | String  | `Yes`     | -  | The ID of the quote stub to get a full quote for.  |
+    | `0`   | `stubId` | String  | `Yes`     | -  | The ID of the quote stub to get a full quote for.  |
     | `1`   | `makerSize` | Number | `No` | `null` | If present, the dealer will use `makerSize` as the maker amount, filling in the taker amount. |
     | `2`   | `takerSize` | Number | `No` | `null` | If present, the dealer will use `takerSize` as the taker amount, filling in the maker amount. |
     | `3`   | `takerAddress` | String | `No` | (note 3) | The address of the taker who will fill the quote. MAY be required by some implementations. |
@@ -746,7 +748,7 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
 
     | Index | Name        | JSON Type | Schema                         | Description                                               |
     | :---- | :---------- | :-------- | :----------------------------- | :-------------------------------------------------------- |
-    | `0`   | `id` | String | [UUID](#schema-uuid) | If valid, the UUID corresponding to the original quote stub. MUST be distinct from the `quoteId` in the quote. |
+    | `0`   | `stubId` | String | [UUID](#schema-uuid) | If valid, the UUID corresponding to the original quote stub. MUST be distinct from the `quoteId` in the quote. |
     | `1`   | `quote`     | Object    | [Quote](#schema-quote)         | A quote (offer) for the specified values from the client matching the original stub. |
     | `2`   | `tradeInfo` | Object    | [TradeInfo](#schema-tradeinfo) | Settlement information (e.g. gas price).                  |
     | `3`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
@@ -1113,6 +1115,8 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
 
 Defines a public "quote stub," indicating a price bound for a given maker/taker asset pair that a trader may request a full quote for at a later time (see `dealer_getQuoteFromStub`).
 
+Stubs are created and updated in a drop-and-replace manner, meaning a new updated stub should reference the one it is replacing, as a convenience to traders.
+
 At least one of either `makerSizeRequest` or `takerSizeRequest` and at least one of either `takerSizeBand` or `makerSizeBand` MUST be included in each stub.
 
 If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size bands) are included, that indicates the implementation provides quotes where the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work.
@@ -1121,7 +1125,8 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
 
     | Name               | Schema                   | Required | JSON Type | Description                                                           |
     | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
-    | `id`          | [UUID](#schema-uuid)     | `Yes`    | String    | A unique ID for this stub, needed to fetch a corresponding quote.             |
+    | `stubId`          | [UUID](#schema-uuid)     | `Yes`    | String    | A unique ID for this stub, needed to fetch a corresponding quote.             |
+    | `lastId` | [UUID](#schema-uuid) | `Yes` | String | The ID of the quote stub being replaced by this one. MUST be `null` if it is the first stub. |
     | `makerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the dealer (maker) in this stub.       |
     | `takerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the trader (taker) in this stub.       |
     | `makerSizeRequest`   | - | `No` | Array\<Number> | The lower and upper bounds for size requests for this stub, denominated in the maker asset. |
@@ -1134,7 +1139,8 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
 
     ```json
     {
-        "id": "3efff541-135a-4be8-9da7-f310d5338b1c",
+        "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
+        "lastId": "09aab684-d2f2-4e36-9c9e-e85d66b15389",
         "makerAsset": "WETH",
         "takerAsset": "DAI",
         "makerSizeRequest": [1000000000000000, 10000000000000000000],
