@@ -34,15 +34,21 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
     -   [GetQuote](#method-dealer_getquote)
     -   [SubmitFill](#method-dealer_submitfill)
     -   [Time](#method-dealer_time)
+    -   [SubscribeToStubs](#method-dealer_subscribetostubs)
+    -   [GetQuoteFromStub](#method-dealer_getquotefromstub)
+    -   [Unsubscribe](#method-dealer_unsubscribe)
 -   [Schemas](#schemas)
     -   [Ticker](#schema-ticker)
     -   [Time](#schema-time)
     -   [UUID](#schema-uuid)
     -   [TradeInfo](#schema-tradeinfo)
     -   [QuoteInfo](#schema-quoteinfo)
+    -   [ValidityParameter](#schema-validityparameter)
     -   [Asset](#schema-asset)
     -   [Market](#schema-market)
+    -   [Order](#schema-order)
     -   [Quote](#schema-quote)
+    -   [QuoteStub](#schema-quotestub)
     -   [Trade](#schema-trade)
 -   [Appendix](#appendix)
     -   [Notes](#notes)
@@ -111,6 +117,14 @@ Implementations MAY choose what types of markets to support, to replicate more c
 1. Client requests to swap 10 DAI for ZRX (receiving the DAI, sending the ZRX)
     - If the market's quote asset is **DAI** this is a request to **sell ZRX** to the dealer.
     - If the market's quote asset is **ZRX** this is a request to **buy DAI** from the dealer.
+
+## Quote feeds
+
+Supplemental to the standard quote request mechanism described in this spec (`dealer_getQuote`), implementations MAY also provide a public "quote feed" subscription mechanism to traders...
+
+```
+@todo: liam
+```
 
 ## Pagination
 
@@ -733,7 +747,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | `-42023` | Invalid UUID.                 | Available to indicate failure to validate a universally unique identifier (UUID).                 |
     | `-42024` | Request rate limit reached.   | Available to indicate a implementation-specific request rate limit has been reached.              |
 
-*   **Example request bodies:**
+-   **Example request bodies:**
 
     ```json
     {
@@ -751,7 +765,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ]
     ```
 
-*   **Example response bodies:**
+-   **Example response bodies:**
 
     ```json
     {
@@ -797,7 +811,7 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
-*   **Example request bodies:**
+-   **Example request bodies:**
 
     ```json
     {
@@ -809,7 +823,7 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     [1574108764.1019]
     ```
 
-*   **Example response bodies:**
+-   **Example response bodies:**
 
     ```json
     {
@@ -820,6 +834,220 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
 
     ```json
     [1574108764.2118, 0.1099]
+    ```
+
+### Method: `dealer_subscribeToStubs`
+
+Allows the caller to subscribe to a feed of quote stubs for a set of maker and taker asset denominated markets for live-updating offers.
+
+If no parameters after are provided, the subscription MUST include quote stubs for all markets that support [quote feeds.](#quote-feeds)
+
+To subscribe to multiple markets with different maker and taker assets, multiple subscriptions SHOULD be used.
+
+-   **Request fields:**
+
+    | Index | Name         | JSON Type | Required | Default | Description                                                 |
+    | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
+    | `0`   | `makerAssets` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these maker assets. |
+    | `1`   | `takerAssets` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these taker assets. |
+
+-   **Response fields:**
+
+    | Index | Name   | JSON Type | Schema               | Description                                                                                  |
+    | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
+    | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | A UUID used to identify this subscription (and used to [cancel](#dealer_unsubscribe) it). |
+
+-   **Event fields:**
+
+    | Index | Name   | JSON Type | Schema               | Description                                                                                  |
+    | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
+    | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | The UUID indicating which subscription this event is from. |
+    | `1`   | `stubs` | Array\<Object> | Array\<[QuoteStub](#schema-quotestub)> | Newly updated quote stubs that match the subscription filters. |
+
+-   **Errors:**
+
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
+    | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested (e.g. no matching markets). |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
+
+-   **Example request body:**
+
+    ```json
+    [
+        ["WETH"],
+        ["DAI", "ZRX", "USDC" ]
+    ]
+    ```
+
+-   **Example response body:**
+
+    ```json
+    [
+        "426dbcf8-1d84-405c-978f-454beb1566b8"
+    ]
+    ```
+
+-   **Example event:**
+
+    ```json
+    [
+        "426dbcf8-1d84-405c-978f-454beb1566b8",
+        [
+            {
+                "id": "1e342bd7-6dca-4cbe-9a91-7466e595206c",
+                "makerAsset": "WETH",
+                "takerAsset": "ZRX",
+                "makerSizeRequest": [1000000000000000, 10000000000000000000],
+                "takerSizeRequest": [500000000000000000, 50000000000000000000000],
+                "makerSizeBand": [1200000000000000, 1800000000000000],
+                "takerSizeBand": [5300000000000000000000, 6500000000000000000000]
+            },
+            {
+                "id": "3efff541-135a-4be8-9da7-f310d5338b1c",
+                "makerAsset": "WETH",
+                "takerAsset": "DAI",
+                "makerSizeRequest": [1000000000000000, 10000000000000000000],
+                "takerSizeRequest": [10000000000000000, 9500000000000000000000],
+                "makerSizeBand": [120000000000000000000, 135000000000000000000],
+                "takerSizeBand": [7400000000000000, 8300000000000000]
+            }
+        ]
+    ]
+    ```
+
+### Method: `dealer_getQuoteFromStub`
+
+Fetch a full quote and signed 0x order for a given quote stub (see [`dealer_subscribeToStubs`](#method-dealer_subscribetostubs)).
+
+To request a quote from a stub, either the `makerSize` or the `takerSize` MUST be included.
+
+-   **Request fields:**
+
+    | Index | Name         | JSON Type | Required | Default | Description                                                 |
+    | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
+    | `0`   | `id` | String  | `Yes`     | -  | The ID of the quote stub to get a full quote for.  |
+    | `1`   | `makerSize` | Number | `No` | `null` | If present, the dealer will use `makerSize` as the maker amount, filling in the taker amount. |
+    | `2`   | `takerSize` | Number | `No` | `null` | If present, the dealer will use `takerSize` as the taker amount, filling in the maker amount. |
+    | `3`   | `takerAddress` | String | `No` | (note 3) | The address of the taker who will fill the quote. MAY be required by some implementations. |
+    | `4`   | `extra` | Object | `No` | `null` | OPTIONAL implementation-specific extra data. |
+
+-   **Response fields:**
+
+    | Index | Name        | JSON Type | Schema                         | Description                                               |
+    | :---- | :---------- | :-------- | :----------------------------- | :-------------------------------------------------------- |
+    | `0`   | `id` | String | [UUID](#schema-uuid) | If valid, the UUID corresponding to the original quote stub. MUST be distinct from the `quoteId` in the quote. |
+    | `1`   | `quote`     | Object    | [Quote](#schema-quote)         | A quote (offer) for the specified values from the client matching the original stub. |
+    | `2`   | `tradeInfo` | Object    | [TradeInfo](#schema-tradeinfo) | Settlement information (e.g. gas price).                  |
+    | `3`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
+
+-   **Errors:**
+
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
+    | `-42005` | Two size requests.                  | Occurs when a client specifies both `baseAssetSize` and `quoteAssetSize`.                  |
+    | `-42006` | Taker not authorized.               | Occurs when the taker's address is not authorized for trading.                             |
+    | `-42007` | Invalid side.                       | Available for implementations to indicate lack of support for a currency-pair style quote. |
+    | `-42008` | Temporary restriction.              | Available for implementations to indicate taker-specific temporary restrictions.           |
+    | `-42011` | Quote too large.                    | Occurs when a quote would exceed the market maximum or the dealer's balance.               |
+    | `-42012` | Quote too small.                    | Occurs when a quote would be smaller than the market's minimum size.                       |
+    | `-42013` | Quote unavailable at this time.     | Reserved for various states where dealers may not be serving quotes.                       |
+    | `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.       |
+    | `-42025` | Stub no longer available.   | Can be used when a trader is trying to get a quote for a stub that has been updated. |
+
+-   **Example request body:**
+
+    ```json
+    [
+        "3ff02eda-24e9-4e2c-9384-fcf08873dcc3",
+        135600000000000000000,
+        null,
+        "0x7df1567399d981562a81596e221d220fefd1ff9b"
+    ]
+    ```
+
+-   **Example response body:**
+
+    ```json
+    [
+        "3ff02eda-24e9-4e2c-9384-fcf08873dcc3",
+        {
+            "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
+            "makerAssetTicker": "ZRX",
+            "takerAssetTicker": "WETH",
+            "makerAssetSize": 135600000000000000000,
+            "takerAssetSize": 180000000000000000,
+            "expiration": 1573775025,
+            "serverTime": 1573775014.2231,
+            "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
+            "order": {
+                "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                "feeRecipientAddress": "0x",
+                "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                "makerAssetAmount": "135600000000000000000",
+                "takerAssetAmount": "180000000000000000",
+                "makerFee": "0",
+                "takerFee": "0",
+                "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+                "expirationTimeSeconds": "1573790025",
+                "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+                "salt": "1572620203025",
+                "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+                "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "makerFeeAssetData": "0x",
+                "takerFeeAssetData": "0x"
+            }
+        },
+        {
+            "networkId": 1,
+            "gasLimit": 210000,
+            "gasPrice": 12000000000
+        },
+        null
+    ]
+    ```
+
+### Method: `dealer_unsubscribe`
+
+Terminate an open subscription, identified by the subscription UUID provided when the subscription was created.
+
+-   **Request fields:**
+
+    | Index | Name         | JSON Type | Required | Default | Description                                                 |
+    | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
+    | `0`   | `subscriptionId` | String  | `Yes`     | -  | The UUID of the subscription to cancel.  |
+
+-   **Response fields:**
+
+    | Index | Name   | JSON Type | Schema               | Description                                                                                  |
+    | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
+    | `0`   | `status` | Boolean    | - | MUST be `true` if the subscription was cancelled, and `false` otherwise. |
+
+
+-   **Errors:**
+
+    | Code     | Description                 | Notes                                                                                |
+    | :------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+    | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
+    | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
+
+-   **Example request body:**
+
+    ```json
+    [
+        "3ff02eda-24e9-4e2c-9384-fcf08873dcc3"
+    ]
+    ```
+
+-   **Example response body:**
+
+    ```json
+    [
+        true
+    ]
     ```
 
 ## Schemas
@@ -1072,6 +1300,41 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     }
     ```
 
+### Schema: `QuoteStub`
+
+Defines a public "quote stub," indicating a price bound for a given maker/taker asset pair that a trader may request a full quote for at a later time (see `dealer_getQuoteFromStub`).
+
+At least one of either `makerSizeRequest` or `takerSizeRequest` and at least one of either `takerSizeBand` or `makerSizeBand` MUST be included in each stub.
+
+If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size bands) are included, that indicates the implementation provides quotes where the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work.
+
+-   **Fields**:
+
+    | Name               | Schema                   | Required | JSON Type | Description                                                           |
+    | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
+    | `id`          | [UUID](#schema-uuid)     | `Yes`    | String    | A unique ID for this stub, needed to fetch a corresponding quote.             |
+    | `makerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the dealer (maker) in this stub.       |
+    | `takerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the trader (taker) in this stub.       |
+    | `makerSizeRequest`   | - | `No` | Array\<Number> | The lower and upper bounds for size requests for this stub, denominated in the maker asset. |
+    | `takerSizeRequest`   | - | `No` | Array\<Number> | The lower and upper bounds for size requests for this stub, denominated in the taker asset. |
+    | `makerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
+    | `takerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
+
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "id": "3efff541-135a-4be8-9da7-f310d5338b1c",
+        "makerAsset": "WETH",
+        "takerAsset": "DAI",
+        "makerSizeRequest": [1000000000000000, 10000000000000000000],
+        "takerSizeRequest": [10000000000000000, 9500000000000000000000],
+        "makerSizeBand": [120000000000000000000, 135000000000000000000],
+        "takerSizeBand": [7400000000000000, 8300000000000000]
+    }
+    ```
+
 ### Schema: `Trade`
 
 Defines a past (settled) trade from a dealer.
@@ -1139,7 +1402,7 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42002` | Invalid filter selection.           | Returned when conflicting or incompatible filters are requested.                                  |
 | `-42003` | Invalid address.                    | Returned when an invalid Ethereum address is provided.                                            |
 | `-42004` | Invalid asset data.                 | Returned when malformed ABIv2 asset data is included in a request.                                |
-| `-42005` | Two size requests.                  | Occurs when a client specifies `baseAssetSize` and `quoteAssetSize`.                              |
+| `-42005` | Two size requests.                  | Occurs when a client specifies `makerAssetSize` and `takerAssetSize`.                             |
 | `-42006` | Taker not authorized.               | Occurs when the taker's address is not authorized for trading.                                    |
 | `-42007` | Invalid side.                       | Available for implementations to indicate lack of support for arbitrary swaps.                    |
 | `-42008` | Temporary restriction.              | Available for implementations to indicate taker-specific temporary restrictions.                  |
@@ -1159,3 +1422,4 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42022` | Invalid order hash.                 | Available to indicate an order transaction hash in a request.                                     |
 | `-42023` | Invalid UUID.                       | Available to indicate failure to validate a universally unique identifier (UUID).                 |
 | `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.              |
+| `-42025` | Stub no longer available.           | Available to indicate that a quote stub has expired or is no longer supported for another reason. |
