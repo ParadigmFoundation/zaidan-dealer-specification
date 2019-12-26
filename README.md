@@ -133,6 +133,8 @@ The [quote stub schema](#schema-quotestub) is intended to provide dealers flexib
 (# of quote stubs) = 2 * (# of price levels per pair) * (# of pairs)
 ```
 
+** Note `(# of pairs)` for dealers that support arbitrary swap functionality is equal to `n^2` where n is the number of assets. For dealers that only support markets between unique base assets and a standard quote currency `(# of pairs)` is equal to `n`.
+
 ## Pagination
 
 Paginated methods MUST implement pagination in accordance with this section. If `page` is not specified, the default MUST be 0. The value for `perPage` MAY be implementation specific.
