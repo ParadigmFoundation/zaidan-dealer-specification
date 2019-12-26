@@ -66,7 +66,6 @@ In addition to notices in each section, each of the following must be true in or
 These requirements are intended to motivate strong guarantees of compatibility between clients and servers and ensure maximum levels of safety for the operators of each: traders and dealers that implement this API.
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
--   Implementations MAY implement methods under the `feed` namespace
 -   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
 -   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
@@ -80,7 +79,8 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MAY require that quote requests include the potential taker's address.
     -   The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
     -   Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
-
+-   Implementations MAY implement methods under the `feed` namespace.
+    - If an implementation supports the "quote feed" model, all methods under the `feed` namespace MUST be supported.
 ## Encoding
 
 -   All asset amount values MUST be integer values (as Numbers) in their base units.
