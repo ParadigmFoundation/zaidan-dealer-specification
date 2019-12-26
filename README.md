@@ -8,6 +8,8 @@ Definitions and specification for the Dealer [JSONRPC (2.0)](https://www.jsonrpc
 
 Methods under the `dealer` namespace (with the `dealer_` prefix) comprise the public dealer API. Implementations MAY provide private administrative functionality through methods under a distinct namespace.
 
+Methods under the `feed` namespace (with the `feed_` prefix) specify an alternative/additional interaction model for trading with dealer implementations, and MAY be omitted by implementers.
+
 The Dealer JSONRPC can be served over WebSockets, HTTP POST, or HTTP GET, or other transports at the discretion of implementers (see notes).
 
 Be sure to see important notes and resources in [the appendix.](#appendix)
@@ -27,7 +29,7 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
 -   [Quote feeds](#quote-feeds)
 -   [Pagination](#pagination)
 -   [Errors](#errors)
--   [Methods](#methods)
+-   [Dealer methods](#dealer-methods)
     -   [AuthStatus](#method-dealer_authstatus)
     -   [GetAssets](#method-dealer_getassets)
     -   [GetMarkets](#method-dealer_getmarkets)
@@ -35,9 +37,10 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
     -   [GetQuote](#method-dealer_getquote)
     -   [SubmitFill](#method-dealer_submitfill)
     -   [Time](#method-dealer_time)
-    -   [SubscribeToStubs](#method-dealer_subscribetostubs)
-    -   [GetQuoteFromStub](#method-dealer_getquotefromstub)
-    -   [Unsubscribe](#method-dealer_unsubscribe)
+-   [Feed methods](#feed-methods)
+    -   [Subscribe](#method-feed_subscribe)
+    -   [GetQuoteFromStub](#method-feed_getquotefromstub)
+    -   [Unsubscribe](#method-feed_unsubscribe)
 -   [Schemas](#schemas)
     -   [Ticker](#schema-ticker)
     -   [Time](#schema-time)
@@ -63,6 +66,7 @@ In addition to notices in each section, each of the following must be true in or
 These requirements are intended to motivate strong guarantees of compatibility between clients and servers and ensure maximum levels of safety for the operators of each: traders and dealers that implement this API.
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
+-   Implementations MAY implement methods under the `feed` namespace
 -   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
 -   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
@@ -169,7 +173,7 @@ Implementations MUST only adhere to the defined codes for the defined scenarios.
 
 Implementations MUST NOT used any defined error code to mean something contrary to what the specification defines.
 
-## Methods
+## Dealer methods
 
 ### Method: `dealer_authStatus`
 
@@ -645,7 +649,9 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     [1574108764.2118, 0.1099]
     ```
 
-### Method: `dealer_subscribeToStubs`
+## Feed methods
+
+### Method: `feed_subscribe`
 
 Allows the caller to subscribe to a feed of quote stubs for a set of maker and taker asset denominated markets for live-updating offers.
 
@@ -728,9 +734,9 @@ To subscribe to multiple markets with different maker and taker assets, multiple
     ]
     ```
 
-### Method: `dealer_getQuoteFromStub`
+### Method: `feed_getQuoteFromStub`
 
-Fetch a full quote and signed 0x order for a given quote stub (see [`dealer_subscribeToStubs`](#method-dealer_subscribetostubs)).
+Fetch a full quote and signed 0x order for a given quote stub (see [`feed_subscribe`](#method-feed_subscribe)).
 
 To request a quote from a stub, either the `makerSize` or the `takerSize` MUST be included.
 
@@ -821,9 +827,9 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
     ]
     ```
 
-### Method: `dealer_unsubscribe`
+### Method: `feed_unsubscribe`
 
-Terminate an open subscription, identified by the subscription UUID provided when the subscription was created.
+Terminate an open feed subscription, identified by the subscription UUID provided when the subscription was created.
 
 -   **Request fields:**
 
