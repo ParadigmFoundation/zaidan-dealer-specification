@@ -24,7 +24,7 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
 -   [Requirements](#requirements)
 -   [Encoding](#encoding)
 -   [Quotes](#quotes)
--   [Quote stubs]
+-   [Quote feeds](#quote-feeds)
 -   [Pagination](#pagination)
 -   [Errors](#errors)
 -   [Methods](#methods)
