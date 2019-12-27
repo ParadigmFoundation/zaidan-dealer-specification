@@ -63,7 +63,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
 -   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
--   Implementations MUST use Array for return values and request parameters (in accordance with the JSONRPC specification).
+-   Implementations MUST use Arrays for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
 -   Implementations MAY require that quote requests include the potential taker's address.
