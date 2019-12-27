@@ -201,14 +201,14 @@ This method MUST return an empty array if no results match the query. Implementa
 
 -   **Request fields:**
 
-    | Index | Name        | JSON Type | Required | Default        | Description                                                          |
-    | :---- | :---------- | :-------- | :------- | :------------- | :------------------------------------------------------------------- |
-    | `0`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result.    |
-    | `1`   | `ticker`    | String    | `No`     | `null`         | Match only assets with this ticker. MUST return only one result.     |
-    | `2`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
-    | `3`   | `chainId` | Number    | `No`     | `1`            | Only match assets with this chain ID.                              |
-    | `4`   | `page`      | Number    | `No`     | `0`            | See [pagination.](#pagination)                                       |
-    | `5`   | `perPage`   | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                       |
+    | Index | Name      | JSON Type | Required | Default        | Description                                                       |
+    | :---- | :-------- | :-------- | :------- | :------------- | :---------------------------------------------------------------- |
+    | `0`   | `address` | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
+    | `1`   | `ticker`  | String    | `No`     | `null`         | Match only assets with this ticker. MUST return only one result.  |
+    | `2`   | `address` | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
+    | `3`   | `chainId` | Number    | `No`     | `1`            | Only match assets with this chain ID.                             |
+    | `4`   | `page`    | Number    | `No`     | `0`            | See [pagination.](#pagination)                                    |
+    | `5`   | `perPage` | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                    |
 
 -   **Response fields:**
 
@@ -277,7 +277,7 @@ This method MUST return an empty array if no results match the query. Implementa
     | `0`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only markets with this maker asset.                      |
     | `1`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only markets that support this taker asset ticker.       |
     | `2`   | `marketId`         | String    | `No`     | `null`         | Match only the market with this ID. MUST match 0 or 1 markets. |
-    | `3`   | `chainId`        | Number    | `No`     | `1`            | Match only markets supporting this chain ID.                    |
+    | `3`   | `chainId`          | Number    | `No`     | `1`            | Match only markets supporting this chain ID.                   |
     | `4`   | `page`             | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
     | `5`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
 
@@ -319,8 +319,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 },
                 "quoteInfo": {
                     "minSize": "100000000000000",
-                    "maxSize": "100000000000000000000",
-                    "durationSeconds": 15
+                    "maxSize": "100000000000000000000"
                 }
             },
             {
@@ -334,8 +333,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 },
                 "quoteInfo": {
                     "minSize": "100000000000000",
-                    "maxSize": "100000000000000000000",
-                    "durationSeconds": 15
+                    "maxSize": "100000000000000000000"
                 }
             }
         ],
@@ -541,12 +539,12 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
 
 -   **Response fields:**
 
-    | Index | Name              | JSON Type | Schema               | Description                                                                                                                                                  |
-    | :---- | :---------------- | :-------- | :------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement.                                                                                       |
-    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted fill transaction (transaction ID).                                                                                                 |
-    | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.                                                                                                    |
-    | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.                                                                                                   |
+    | Index | Name              | JSON Type | Schema               | Description                                                            |
+    | :---- | :---------------- | :-------- | :------------------- | :--------------------------------------------------------------------- |
+    | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement. |
+    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted fill transaction (transaction ID).           |
+    | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.              |
+    | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.             |
 
 -   **Errors:**
 
@@ -691,23 +689,21 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
 ### Schema: `QuoteInfo`
 
-Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) for individual quotes.
+Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) generated for individual quotes.
 
 -   **Fields**:
 
-    | Name              | Schema | JSON Type | Description                                                                               |
-    | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
-    | `minSize`         | -      | String    | The minimum supported trade size, in base units of a market's maker asset.                |
-    | `maxSize`         | -      | String    | The maximum supported trade size, in base units of a market's maker asset.                |
-    | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
+    | Name      | Schema | JSON Type | Description                                                                |
+    | :-------- | :----- | :-------- | :------------------------------------------------------------------------- |
+    | `minSize` | -      | String    | The minimum supported trade size, in base units of a market's maker asset. |
+    | `maxSize` | -      | String    | The maximum supported trade size, in base units of a market's maker asset. |
 
 -   **JSON Example**:
 
     ```json
     {
         "minSize": "100000000000000",
-        "maxSize": "10000000000000000000000000",
-        "durationSeconds": 15
+        "maxSize": "10000000000000000000000000"
     }
     ```
 
@@ -743,13 +739,13 @@ Defines information about an asset supported by a dealer implementation.
 
 -   **Fields**:
 
-    | Name        | Schema                   | Required | JSON Type | Description                                                                                                                                                                   |
-    | :---------- | :----------------------- | :------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
-    | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
-    | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
-    | `chainId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (2).                                                    |
-    | `address` | -                        | `Yes`    | String    | The Ethereum address of the deployed ERC-20 token contract for this asset. |
+    | Name       | Schema                   | Required | JSON Type | Description                                                                                                              |
+    | :--------- | :----------------------- | :------- | :-------- | :----------------------------------------------------------------------------------------------------------------------- |
+    | `ticker`   | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                    |
+    | `name`     | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                     |
+    | `decimals` | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).     |
+    | `chainId`  | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (2). |
+    | `address`  | -                        | `Yes`    | String    | The Ethereum address of the deployed ERC-20 token contract for this asset.                                               |
 
 -   **JSON Example**:
 
@@ -796,8 +792,7 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
         },
         "quoteInfo": {
             "minSize": "100000000000000",
-            "maxSize": "10000000000000000000000000",
-            "durationSeconds": 15
+            "maxSize": "10000000000000000000000000"
         },
         "metadata": {}
     }
@@ -824,7 +819,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `takerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)).                                                                                                                       |
     | `makerAssetSize`     | -                         | `Yes`    | String    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
     | `takerAssetSize`     | -                         | `Yes`    | String    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
-    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
+    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which requests to fill this quote will be rejected.                                                                                                               |
     | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization.                                                                                             |
     | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
     | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
