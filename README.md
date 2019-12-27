@@ -63,14 +63,12 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
 -   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
+-   Implementations MUST use Array for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
 -   Implementations MAY require that quote requests include the potential taker's address.
     -   The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
     -   Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
--   Implementations MAY use Arrays or Objects for return values and parameters (in accordance with the JSONRPC specification).
-    -   If arrays are used, the index specified in each method MUST match the implementation.
-    -   If objects are used, the keys MUST match the name specified for each parameter.
 
 ## Encoding
 
@@ -176,26 +174,13 @@ Implementation MAY use arbitrary mechanisms to determine a taker's authorization
     | `-42001` | Invalid taker address.      | Returned when an address is invalid or missing.                                      |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
--   **Example request bodies:**
-
-    ```json
-    {
-        "takerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
-    }
-    ```
+-   **Example request body:**
 
     ```json
     ["0xcefc94f1c0a0be7ad47c7fd961197738fc233459"]
     ```
 
--   **Example response bodies:**
-
-    ```json
-    {
-        "authorized": false,
-        "reason": "BLACKLISTED"
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [false, "BLACKLISTED"]
@@ -240,45 +225,13 @@ This method MUST return an empty array if no results match the query. Implementa
     | `-42004` | Invalid asset data.         | Returned when malformed ABIv2 asset data is included in a request.                   |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
--   **Example request bodies:**
-
-    ```json
-    {
-        "page": 0,
-        "perPage": 2,
-        "networkId": 1
-    }
-    ```
+-   **Example request body:**
 
     ```json
     [null, null, 1, 0, 2]
     ```
 
--   **Example response bodies:**
-
-    ```json
-    {
-        "page": 0,
-        "perPage": 2,
-        "total": 2,
-        "records": [
-            {
-                "ticker": "DAI",
-                "name": "DAI Stablecoin (v1.0)",
-                "decimals": 18,
-                "networkId": 1,
-                "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
-            },
-            {
-                "ticker": "WETH",
-                "name": "Wrapped Ether",
-                "decimals": 18,
-                "networkId": 1,
-                "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-            }
-        ]
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -341,62 +294,13 @@ This method MUST return an empty array if no results match the query. Implementa
     | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested.                     |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
--   **Example request bodies:**
-
-    ```json
-    {
-        "makerAssetTicker": "WETH",
-        "networkId": 1,
-        "page": 0,
-        "perPage": 2
-    }
-    ```
+-   **Example request body:**
 
     ```json
     ["WETH", null, null, 1, 0, 2]
     ```
 
--   **Example response bodies:**
-
-    ```json
-    {
-        "page": 0,
-        "perPage": 2,
-        "total": 2,
-        "records": [
-            {
-                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-                "makerAssetTicker": "WETH",
-                "takerAssetTickers": ["DAI", "MKR", "ZRX"],
-                "tradeInfo": {
-                    "networkId": 1,
-                    "gasLimit": 210000,
-                    "gasPrice": 12000000000
-                },
-                "quoteInfo": {
-                    "minSize": 100000000000000,
-                    "maxSize": 100000000000000000000,
-                    "durationSeconds": 15
-                }
-            },
-            {
-                "marketId": "87c0ee47-44c0-4ff0-ba68-6638c79c11dd",
-                "makerAssetTicker": "WETH",
-                "takerAssetTickers": ["USDC"],
-                "tradeInfo": {
-                    "networkId": 1,
-                    "gasLimit": 210000,
-                    "gasPrice": 12000000000
-                },
-                "quoteInfo": {
-                    "minSize": 100000000000000,
-                    "maxSize": 100000000000000000000,
-                    "durationSeconds": 15
-                }
-            }
-        ]
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -483,43 +387,13 @@ All other fields can be dynamically populated from 0x event logs based on a know
     | `-42023` | Invalid UUID.               | Available to indicate failure to validate a universally unique identifier (UUID).    |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
-*   **Example request bodies:**
-
-    ```json
-    {
-        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-        "page": 0,
-        "perPage": 10
-    }
-    ```
+-   **Example request body:**
 
     ```json
     [null, null, null, "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65", null, null, null, 0, 10]
     ```
 
-*   **Example response bodies:**
-
-    ```json
-    {
-        "page": 0,
-        "perPage": 10,
-        "items": 1,
-        "records": [
-            {
-                "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-                "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-                "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-                "timestamp": 1574108114.3301,
-                "makerAssetTicker": "WETH",
-                "takerAssetTicker": "DAI",
-                "makerAssetAmount": 883000000000000000,
-                "takerAssetAmount": 143500000000000000000
-            }
-        ]
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -590,60 +464,13 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
     | `-42013` | Quote unavailable at this time.     | Reserved for various states where dealers may not be serving quotes.                       |
     | `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.       |
 
--   **Example request bodies:**
-
-    ```json
-    {
-        "makerAssetTicker": "ZRX",
-        "takerAssetTicker": "DAI",
-        "makerAssetSize": 1435000000000000000,
-        "takerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"
-    }
-    ```
+-   **Example request body:**
 
     ```json
     ["ZRX", "DAI", 1435000000000000000, null, "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"]
     ```
 
--   **Example response bodies:**
-
-    ```json
-    {
-        "tradeInfo": {
-            "networkId": 1,
-            "gasLimit": 210000,
-            "gasPrice": 12000000000
-        },
-        "quote": {
-            "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-            "makerAssetTicker": "ZRX",
-            "takerAssetTicker": "DAI",
-            "makerAssetSize": 1435000000000000000,
-            "takerAssetSize": 300000000000000000,
-            "expiration": 1573775025,
-            "serverTime": 1573775014.2231,
-            "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
-            "order": {
-                "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-                "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-                "feeRecipientAddress": "0x",
-                "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
-                "makerAssetAmount": "1435000000000000000",
-                "takerAssetAmount": "300000000000000000",
-                "makerFee": "0",
-                "takerFee": "0",
-                "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
-                "expirationTimeSeconds": "1573790025",
-                "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
-                "salt": "1572620203025",
-                "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
-                "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                "makerFeeAssetData": "0x",
-                "takerFeeAssetData": "0x"
-            }
-        }
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -732,15 +559,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | `-42023` | Invalid UUID.                 | Available to indicate failure to validate a universally unique identifier (UUID).                 |
     | `-42024` | Request rate limit reached.   | Available to indicate a implementation-specific request rate limit has been reached.              |
 
-*   **Example request bodies:**
-
-    ```json
-    {
-        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "salt": "1572620203025",
-        "signature": "0xd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d25114367ef9b201c55d7f7eaa7301c0c8540ca3afbd02"
-    }
-    ```
+-   **Example request body:**
 
     ```json
     [
@@ -750,15 +569,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ]
     ```
 
-*   **Example response bodies:**
-
-    ```json
-    {
-        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-        "submittedAt": 1574108114.3301
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -794,26 +605,13 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
     | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
-*   **Example request bodies:**
-
-    ```json
-    {
-        "clientTime": 1574108764.1019
-    }
-    ```
+-   **Example request body:**
 
     ```json
     [1574108764.1019]
     ```
 
-*   **Example response bodies:**
-
-    ```json
-    {
-        "time": 1574108764.2118,
-        "diff": 0.1099
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [1574108764.2118, 0.1099]
