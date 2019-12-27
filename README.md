@@ -68,6 +68,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MUST use Arrays for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
+-   Even though the specification allows markets to individual specify the active chain ID, implementations MUST NOT operate on more than one Ethereum network (identified by the chain ID) at a time (see [note 2](#notes)).
 -   Implementations MAY require that quote requests include the potential taker's address.
     -   The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
     -   Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
@@ -205,7 +206,7 @@ This method MUST return an empty array if no results match the query. Implementa
     | `0`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result.    |
     | `1`   | `ticker`    | String    | `No`     | `null`         | Match only assets with this ticker. MUST return only one result.     |
     | `2`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
-    | `3`   | `networkId` | Number    | `No`     | `1`            | Only match assets with this network ID.                              |
+    | `3`   | `chainId` | Number    | `No`     | `1`            | Only match assets with this chain ID.                              |
     | `4`   | `page`      | Number    | `No`     | `0`            | See [pagination.](#pagination)                                       |
     | `5`   | `perPage`   | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                       |
 
@@ -242,14 +243,14 @@ This method MUST return an empty array if no results match the query. Implementa
                 "ticker": "DAI",
                 "name": "DAI Stablecoin (v1.0)",
                 "decimals": 18,
-                "networkId": 1,
+                "chainId": 1,
                 "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
             },
             {
                 "ticker": "WETH",
                 "name": "Wrapped Ether",
                 "decimals": 18,
-                "networkId": 1,
+                "chainId": 1,
                 "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
             }
         ],
@@ -276,7 +277,7 @@ This method MUST return an empty array if no results match the query. Implementa
     | `0`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only markets with this maker asset.                      |
     | `1`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only markets that support this taker asset ticker.       |
     | `2`   | `marketId`         | String    | `No`     | `null`         | Match only the market with this ID. MUST match 0 or 1 markets. |
-    | `3`   | `networkId`        | Number    | `No`     | `1`            | Match only markets supporting this network.                    |
+    | `3`   | `chainId`        | Number    | `No`     | `1`            | Match only markets supporting this chain ID.                    |
     | `4`   | `page`             | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
     | `5`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
 
@@ -312,7 +313,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "makerAssetTicker": "WETH",
                 "takerAssetTickers": ["DAI", "MKR", "ZRX"],
                 "tradeInfo": {
-                    "networkId": 1,
+                    "chainId": 1,
                     "gasLimit": "210000",
                     "gasPrice": "12000000000"
                 },
@@ -327,7 +328,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 "makerAssetTicker": "WETH",
                 "takerAssetTickers": ["USDC"],
                 "tradeInfo": {
-                    "networkId": 1,
+                    "chainId": 1,
                     "gasLimit": "210000",
                     "gasPrice": "12000000000"
                 },
@@ -505,7 +506,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
             }
         },
         {
-            "networkId": 1,
+            "chainId": 1,
             "gasLimit": "210000",
             "gasPrice": "12000000000"
         },
@@ -747,7 +748,7 @@ Defines information about an asset supported by a dealer implementation.
     | `ticker`    | [Ticker](#schema-ticker) | `Yes`    | String    | Short-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                         |
     | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
     | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
-    | `networkId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
+    | `chainId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (2).                                                    |
     | `address` | -                        | `Yes`    | String    | The Ethereum address of the deployed ERC-20 token contract for this asset. |
 
 -   **JSON Example**:
@@ -757,7 +758,7 @@ Defines information about an asset supported by a dealer implementation.
         "ticker": "DAI",
         "name": "DAI Stablecoin (v1.0)",
         "decimals": 18,
-        "networkId": 1,
+        "chainId": 1,
         "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
     }
     ```
@@ -789,7 +790,7 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
         "makerAssetTicker": "WETH",
         "takerAssetTickers": ["DAI", "USDC", "MKR", "ZRX"],
         "tradeInfo": {
-            "networkId": 1,
+            "chainId": 1,
             "gasLimit": "210000",
             "gasPrice": "12000000000"
         },
@@ -917,7 +918,7 @@ Defines a past (settled) trade from a dealer.
 ### Notes
 
 1. This definition of a market makes an intentional departure from conventional currency-pair based markets in which their is a single quote asset and a single base asset. Defining only the maker and taker assets for a market allows greater flexibility for implementers, and allows pricing to be defined in terms of either asset at higher levels.
-1. If the dealer is operating on the main Ethereum network, they MUST treat the `networkID` of `1` as the Ethereum mainnet, as specified in EIP-155. Private and test networks may use any network ID, but SHOULD use conventions established by public test networks (e.g. Ropsten is 3).
+1. If the dealer is operating on the main Ethereum network, they MUST treat the `chainId` of `1` as the Ethereum mainnet, as [specified in EIP-155.](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) Private and test networks may use any chain ID, but SHOULD use conventions established by public test networks (e.g. Ropsten is 3).
 1. The default value SHOULD be the null address (20 null bytes) represented as a hex string. Implementations MAY require takers to specify a `takerAddress`.
 1. Quotes indicated as `includeOrder` as `false` can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
     - Implementations MAY treat these types of quotes separately in internal tracking and/or pricing mechanisms.
