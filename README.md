@@ -217,7 +217,7 @@ This method MUST return an empty array if no results match the query. Implementa
     | :---- | :---------- | :-------- | :------- | :------------- | :------------------------------------------------------------------- |
     | `0`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result.    |
     | `1`   | `ticker`    | String    | `No`     | `null`         | Match only assets with this ticker. MUST return only one result.     |
-    | `2`   | `assetData` | String    | `No`     | `null`         | Match only assets with this asset data. MUST return only one result. |
+    | `2`   | `address`   | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
     | `3`   | `networkId` | Number    | `No`     | `1`            | Only match assets with this network ID.                              |
     | `4`   | `page`      | Number    | `No`     | `0`            | See [pagination.](#pagination)                                       |
     | `5`   | `perPage`   | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                       |
@@ -267,14 +267,14 @@ This method MUST return an empty array if no results match the query. Implementa
                 "name": "DAI Stablecoin (v1.0)",
                 "decimals": 18,
                 "networkId": 1,
-                "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359"
+                "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
             },
             {
                 "ticker": "WETH",
                 "name": "Wrapped Ether",
                 "decimals": 18,
                 "networkId": 1,
-                "assetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+                "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
             }
         ]
     }
@@ -288,14 +288,14 @@ This method MUST return an empty array if no results match the query. Implementa
                 "name": "DAI Stablecoin (v1.0)",
                 "decimals": 18,
                 "networkId": 1,
-                "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359"
+                "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
             },
             {
                 "ticker": "WETH",
                 "name": "Wrapped Ether",
                 "decimals": 18,
                 "networkId": 1,
-                "assetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+                "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
             }
         ],
         2,
@@ -951,7 +951,7 @@ Defines information about an asset supported by a dealer implementation.
     | `name`      | -                        | `Yes`    | String    | Long-form name of the ERC-20 asset. SHOULD match the value provided by the contract.                                                                                          |
     | `decimals`  | -                        | `Yes`    | Number    | The number of decimals used in the tokens user representation (see [EIP-20](https://eips.ethereum.org/EIPS/eip-20)).                                                          |
     | `networkId` | -                        | `Yes`    | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) network ID of the active Ethereum network (2).                                                    |
-    | `assetData` | -                        | `Yes`    | String    | [ABIv2 encoded asset data](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#assetdata) (including address) as used in the 0x system. |
+    | `address` | -                        | `Yes`    | String    | The Ethereum address of the deployed ERC-20 token contract for this asset. |
 
 -   **JSON Example**:
 
@@ -961,7 +961,7 @@ Defines information about an asset supported by a dealer implementation.
         "name": "DAI Stablecoin (v1.0)",
         "decimals": 18,
         "networkId": 1,
-        "assetData": "0xf47261b000000000000000000000000089d24a6b4ccb1b6faa2625fe562bdd9a23260359"
+        "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
     }
     ```
 
