@@ -73,14 +73,14 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
 -   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
+-   Implementations MUST use Array for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations MUST use Array for return values and parameters (in accordance with the JSONRPC specification).
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
 -   Implementations MAY require that quote requests include the potential taker's address.
     -   The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
     -   Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
--   Implementations MAY implement methods under the `feed` namespace.
-    - If an implementation supports the "quote feed" model, all methods under the `feed` namespace MUST be supported.
+
 ## Encoding
 
 -   All asset amount values MUST be integer values (as Numbers) in their base units.
@@ -258,36 +258,11 @@ This method MUST return an empty array if no results match the query. Implementa
 
 -   **Example request body:**
 
-
     ```json
     [null, null, 1, 0, 2]
     ```
 
--   **Example response bodies:**
-
-    ```json
-    {
-        "page": 0,
-        "perPage": 2,
-        "total": 2,
-        "records": [
-            {
-                "ticker": "DAI",
-                "name": "DAI Stablecoin (v1.0)",
-                "decimals": 18,
-                "networkId": 1,
-                "address": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
-            },
-            {
-                "ticker": "WETH",
-                "name": "Wrapped Ether",
-                "decimals": 18,
-                "networkId": 1,
-                "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-            }
-        ]
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
@@ -443,13 +418,13 @@ All other fields can be dynamically populated from 0x event logs based on a know
     | `-42023` | Invalid UUID.               | Available to indicate failure to validate a universally unique identifier (UUID).    |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
-*   **Example request body:**
+-   **Example request body:**
 
     ```json
     [null, null, null, "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65", null, null, null, 0, 10]
     ```
 
-*   **Example response body:**
+-   **Example response body:**
 
     ```json
     [
@@ -625,15 +600,7 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ]
     ```
 
-*   **Example response bodies:**
-
-    ```json
-    {
-        "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-        "submittedAt": 1574108114.3301
-    }
-    ```
+-   **Example response body:**
 
     ```json
     [
