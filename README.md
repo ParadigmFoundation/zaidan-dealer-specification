@@ -714,10 +714,9 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | Index | Name              | JSON Type | Schema               | Description                                                                                                                                                  |
     | :---- | :---------------- | :-------- | :------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
     | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement.                                                                                       |
-    | `1`   | `orderHash`       | String    | -                    | The [hash of the 0x order that](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order) is being filled. |
-    | `2`   | `transactionHash` | String    | -                    | The hash of the submitted fill transaction (transaction ID).                                                                                                 |
-    | `3`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.                                                                                                    |
-    | `4`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.                                                                                                   |
+    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted fill transaction (transaction ID).                                                                                                 |
+    | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.                                                                                                    |
+    | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.                                                                                                   |
 
 -   **Errors:**
 
@@ -756,7 +755,6 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ```json
     {
         "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
         "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
         "submittedAt": 1574108114.3301
     }
@@ -765,7 +763,6 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     ```json
     [
         "bafa9565-598d-413a-80d3-7ec3b7e24a08",
-        "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
         "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
         1574108114.3301
     ]
