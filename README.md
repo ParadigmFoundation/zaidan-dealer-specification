@@ -319,8 +319,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 },
                 "quoteInfo": {
                     "minSize": "100000000000000",
-                    "maxSize": "100000000000000000000",
-                    "durationSeconds": 15
+                    "maxSize": "100000000000000000000"
                 }
             },
             {
@@ -334,8 +333,7 @@ This method MUST return an empty array if no results match the query. Implementa
                 },
                 "quoteInfo": {
                     "minSize": "100000000000000",
-                    "maxSize": "100000000000000000000",
-                    "durationSeconds": 15
+                    "maxSize": "100000000000000000000"
                 }
             }
         ],
@@ -691,7 +689,7 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
 ### Schema: `QuoteInfo`
 
-Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) for individual quotes.
+Defines information about quote parameters for a given market. Does NOT included specific validity parameters (`ValidityParameter`) generated for individual quotes.
 
 -   **Fields**:
 
@@ -699,15 +697,13 @@ Defines information about quote parameters for a given market. Does NOT included
     | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
     | `minSize`         | -      | String    | The minimum supported trade size, in base units of a market's maker asset.                |
     | `maxSize`         | -      | String    | The maximum supported trade size, in base units of a market's maker asset.                |
-    | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
 
 -   **JSON Example**:
 
     ```json
     {
         "minSize": "100000000000000",
-        "maxSize": "10000000000000000000000000",
-        "durationSeconds": 15
+        "maxSize": "10000000000000000000000000"
     }
     ```
 
@@ -796,8 +792,7 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
         },
         "quoteInfo": {
             "minSize": "100000000000000",
-            "maxSize": "10000000000000000000000000",
-            "durationSeconds": 15
+            "maxSize": "10000000000000000000000000"
         },
         "metadata": {}
     }
@@ -824,7 +819,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `takerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)).                                                                                                                       |
     | `makerAssetSize`     | -                         | `Yes`    | String    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
     | `takerAssetSize`     | -                         | `Yes`    | String    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
-    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
+    | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which requests to fill this quote will be rejected.                                                                                                                  |
     | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization.                                                                                             |
     | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
     | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
