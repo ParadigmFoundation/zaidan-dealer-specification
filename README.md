@@ -57,11 +57,13 @@ These requirements are intended to motivate strong guarantees of compatibility b
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
 -   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
--   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network.
+-   Implementations MUST use the [canonical 0x v3 addresses](https://github.com/0xProject/0x-monorepo/blob/development/packages/contract-addresses/addresses.json) for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
 -   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
+-   Implementations MUST display asset amounts in base units of the corresponding assets; there MUST NOT be decimal asset amounts (see [encoding](#encoding)).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
+-   Implementations MUST encode all values denoting asset amounts as JSON Strings in the public API to preserve precision.
 -   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
 -   Implementations MUST use Arrays for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
@@ -72,8 +74,8 @@ These requirements are intended to motivate strong guarantees of compatibility b
 
 ## Encoding
 
--   All asset amount values MUST be integer values (as Numbers) in their base units.
--   Binary data (EVM `bytes`, etc.) MUST be encoded as `0x`-prefixed all-lowercase hex-encoded strings in the JSONRPC.
+-   All asset amount values, including gas prices and gas limits MUST be integer values (as Strings) in their base units.
+-   Binary data (EVM `bytes` type, etc.) MUST be encoded as `0x`-prefixed all-lowercase hex-encoded strings in the JSONRPC.
 -   Ethereum addresses MUST be encoded as all other binary data (`0x`-prefix, all lowercase, no EIP-55 checksum).
 -   Unless otherwise specified, values MUST use their equivalent JSON types (as shown in the examples).
 
@@ -90,10 +92,10 @@ Implementations MAY choose what types of markets to support, to replicate more c
 
 ```json
 [
-    ["DAI", "ZRX", null, 100000000000000000000],
-    ["ZRX", "DAI", 100000000000000000000, null],
-    ["ZRX", "DAI", null, 10000000000000000000],
-    ["DAI", "ZRX", 10000000000000000000, null]
+    ["DAI", "ZRX", null, "100000000000000000000"],
+    ["ZRX", "DAI", "100000000000000000000", null],
+    ["ZRX", "DAI", null, "10000000000000000000"],
+    ["DAI", "ZRX", "10000000000000000000", null]
 ]
 ```
 
@@ -311,12 +313,12 @@ This method MUST return an empty array if no results match the query. Implementa
                 "takerAssetTickers": ["DAI", "MKR", "ZRX"],
                 "tradeInfo": {
                     "networkId": 1,
-                    "gasLimit": 210000,
-                    "gasPrice": 12000000000
+                    "gasLimit": "210000",
+                    "gasPrice": "12000000000"
                 },
                 "quoteInfo": {
-                    "minSize": 100000000000000,
-                    "maxSize": 100000000000000000000,
+                    "minSize": "100000000000000",
+                    "maxSize": "100000000000000000000",
                     "durationSeconds": 15
                 }
             },
@@ -326,12 +328,12 @@ This method MUST return an empty array if no results match the query. Implementa
                 "takerAssetTickers": ["USDC"],
                 "tradeInfo": {
                     "networkId": 1,
-                    "gasLimit": 210000,
-                    "gasPrice": 12000000000
+                    "gasLimit": "210000",
+                    "gasPrice": "12000000000"
                 },
                 "quoteInfo": {
-                    "minSize": 100000000000000,
-                    "maxSize": 100000000000000000000,
+                    "minSize": "100000000000000",
+                    "maxSize": "100000000000000000000",
                     "durationSeconds": 15
                 }
             }
@@ -407,8 +409,8 @@ All other fields can be dynamically populated from 0x event logs based on a know
                 "timestamp": 1574108114.3301,
                 "makerAssetTicker": "WETH",
                 "takerAssetTicker": "DAI",
-                "makerAssetAmount": 883000000000000000,
-                "takerAssetAmount": 143500000000000000000
+                "makerAssetAmount": "883000000000000000",
+                "takerAssetAmount": "143500000000000000000"
             }
         ],
         1,
@@ -467,7 +469,7 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
 -   **Example request body:**
 
     ```json
-    ["ZRX", "DAI", 1435000000000000000, null, "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"]
+    ["ZRX", "DAI", "1435000000000000000", null, "0xcefc94f1c0a0be7ad47c7fd961197738fc233459"]
     ```
 
 -   **Example response body:**
@@ -478,8 +480,8 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
             "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
             "makerAssetTicker": "ZRX",
             "takerAssetTicker": "DAI",
-            "makerAssetSize": 1435000000000000000,
-            "takerAssetSize": 300000000000000000,
+            "makerAssetSize": "1435000000000000000",
+            "takerAssetSize": "300000000000000000",
             "expiration": 1573775025,
             "serverTime": 1573775014.2231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
@@ -504,8 +506,8 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
         },
         {
             "networkId": 1,
-            "gasLimit": 210000,
-            "gasPrice": 12000000000
+            "gasLimit": "210000",
+            "gasPrice": "12000000000"
         },
         null
     ]
@@ -674,15 +676,15 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
     | Name       | Schema | JSON Type | Description                                                                                   |
     | :--------- | :----- | :-------- | :-------------------------------------------------------------------------------------------- |
-    | `gasLimit` | -      | Number    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
-    | `gasPrice` | -      | Number    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
+    | `gasLimit` | -      | String    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
+    | `gasPrice` | -      | String    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
 
 -   **JSON Example**:
 
     ```json
     {
-        "gasLimit": 210000,
-        "gasPrice": 12000000000
+        "gasLimit": "210000",
+        "gasPrice": "12000000000"
     }
     ```
 
@@ -694,16 +696,16 @@ Defines information about quote parameters for a given market. Does NOT included
 
     | Name              | Schema | JSON Type | Description                                                                               |
     | :---------------- | :----- | :-------- | :---------------------------------------------------------------------------------------- |
-    | `minSize`         | -      | Number    | The minimum supported trade size, in base units of a market's maker asset.                |
-    | `maxSize`         | -      | Number    | The maximum supported trade size, in base units of a market's maker asset.                |
+    | `minSize`         | -      | String    | The minimum supported trade size, in base units of a market's maker asset.                |
+    | `maxSize`         | -      | String    | The maximum supported trade size, in base units of a market's maker asset.                |
     | `durationSeconds` | -      | Number    | The validity duration of quotes for the market in seconds (`0` indicating no expiration). |
 
 -   **JSON Example**:
 
     ```json
     {
-        "minSize": 100000000000000,
-        "maxSize": 10000000000000000000000000,
+        "minSize": "100000000000000",
+        "maxSize": "10000000000000000000000000",
         "durationSeconds": 15
     }
     ```
@@ -788,12 +790,12 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
         "takerAssetTickers": ["DAI", "USDC", "MKR", "ZRX"],
         "tradeInfo": {
             "networkId": 1,
-            "gasLimit": 210000,
-            "gasPrice": 12000000000
+            "gasLimit": "210000",
+            "gasPrice": "12000000000"
         },
         "quoteInfo": {
-            "minSize": 100000000000000,
-            "maxSize": 10000000000000000000000000,
+            "minSize": "100000000000000",
+            "maxSize": "10000000000000000000000000",
             "durationSeconds": 15
         },
         "metadata": {}
@@ -819,8 +821,8 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `quoteId`            | [UUID](#schema-uuid)      | `Yes`    | String    | A UUID (v4) that MUST correspond to this offer only.                                                                                                                                       |
     | `makerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's maker asset (see [quotes](#quotes)).                                                                                                                       |
     | `takerAssetTicker`   | [Ticker](#schema-ticker)  | `Yes`    | String    | Shorthand ticker of the quote's taker asset (see [quotes](#quotes)).                                                                                                                       |
-    | `makerAssetSize`     | -                         | `Yes`    | Number    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
-    | `quoteAssetSize`     | -                         | `Yes`    | Number    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
+    | `makerAssetSize`     | -                         | `Yes`    | String    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
+    | `takerAssetSize`     | -                         | `Yes`    | String    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
     | `expiration`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp after which the quote will be rejected for settlement.                                                                                                                  |
     | `serverTime`         | [Time](#schema-time)      | `Yes`    | Number    | The UNIX timestamp at which the server generated the quote. Helpful for clock synchronization.                                                                                             |
     | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
@@ -835,8 +837,8 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
         "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
         "makerAssetTicker": "ZRX",
         "takerAssetTicker": "WETH",
-        "makerAssetSize": 100000000000000000000,
-        "takerAssetSize": 300000000000000000,
+        "makerAssetSize": "100000000000000000000",
+        "takerAssetSize": "300000000000000000",
         "expiration": 1573775025,
         "serverTime": 1573775014.2231,
         "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
@@ -883,8 +885,8 @@ Defines a past (settled) trade from a dealer.
     | `timestamp`        | [Time](#schema-time)     | `Yes`    | Number    | The UNIX timestamp the fill was submitted (or mined) at.              |
     | `makerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's maker asset.                                |
     | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's taker asset.                                |
-    | `makerAssetAmount` | -                        | `Yes`    | Number    | The amount of the maker asset transacted in the trade.                |
-    | `takerAssetAmount` | -                        | `Yes`    | Number    | The amount of the taker asset transacted in the trade.                |
+    | `makerAssetAmount` | -                        | `Yes`    | String    | The amount of the maker asset transacted in the trade.                |
+    | `takerAssetAmount` | -                        | `Yes`    | String    | The amount of the taker asset transacted in the trade.                |
 
 -   **JSON Example**:
 
@@ -898,8 +900,8 @@ Defines a past (settled) trade from a dealer.
         "timestamp": 1574108114.3301,
         "makerAssetTicker": "WETH",
         "takerAssetTicker": "DAI",
-        "makerAssetAmount": 883000000000000000,
-        "takerAssetAmount": 143500000000000000000
+        "makerAssetAmount": "883000000000000000",
+        "takerAssetAmount": "143500000000000000000"
     }
     ```
 
