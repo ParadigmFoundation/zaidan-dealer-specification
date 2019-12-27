@@ -68,7 +68,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MUST use Arrays for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations SHOULD support Ether (ETH) trading, and if so, MUST do so via the canonical [WETH contract](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) for the active network.
--   Even though the specification allows markets to individual specify the active chain ID, implementations MUST NOT operate on more than one Ethereum network (identified by the chain ID) at a time (see [note 2](#notes)).
+-   Even though the specification allows markets to individual specify the active [chain ID](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md), implementations MUST NOT operate on more than one Ethereum network (identified by the chain ID) at a time (see [note 2](#notes)).
 -   Implementations MAY require that quote requests include the potential taker's address.
     -   The address provided by the taker MAY be used to restrict the `takerAddress` of the quotes underlying signed 0x order.
     -   Implementations MAY record and use the address provided by the taker to influence pricing or to restrict quote provision for blacklisted takers.
@@ -277,9 +277,8 @@ This method MUST return an empty array if no results match the query. Implementa
     | `0`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only markets with this maker asset.                      |
     | `1`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only markets that support this taker asset ticker.       |
     | `2`   | `marketId`         | String    | `No`     | `null`         | Match only the market with this ID. MUST match 0 or 1 markets. |
-    | `3`   | `chainId`          | Number    | `No`     | `1`            | Match only markets supporting this chain ID.                   |
-    | `4`   | `page`             | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
-    | `5`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
+    | `3`   | `page`             | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
+    | `4`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
 
 -   **Response fields:**
 
@@ -300,7 +299,7 @@ This method MUST return an empty array if no results match the query. Implementa
 -   **Example request body:**
 
     ```json
-    ["WETH", null, null, 1, 0, 2]
+    ["WETH", null, null, 0, 2]
     ```
 
 -   **Example response body:**
@@ -675,6 +674,7 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
     | Name       | Schema | JSON Type | Description                                                                                   |
     | :--------- | :----- | :-------- | :-------------------------------------------------------------------------------------------- |
+    | `chainId`  | -      | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (MUST match the EIP).                   |
     | `gasLimit` | -      | String    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
     | `gasPrice` | -      | String    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
 
@@ -682,6 +682,7 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
     ```json
     {
+        "chainId": 1,
         "gasLimit": "210000",
         "gasPrice": "12000000000"
     }
