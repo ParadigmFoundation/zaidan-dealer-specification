@@ -1122,7 +1122,7 @@ Stubs are created and updated in a drop-and-replace manner, meaning a new update
 
 `makerSizeLimit` and `takerPriceBand` MUST be included in each stub.
 
-Some dealer's may service quote requests denominated in a quantity of either the maker or taker asset (@todo: how to tell?). If this is the case, a taker can infer the minimum available quantity of taker asset by using the `makerSizeLimit` and the right price bound defined in `takerPriceBand`.
+Dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset. A taker can infer the minimum available quantity of taker asset fro a given stub by using the `makerSizeLimit` and the right price bound defined in `takerPriceBand`.
 
 If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size bands) are included, that indicates the implementation provides quotes where the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work.
 
