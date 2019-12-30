@@ -205,10 +205,9 @@ This method MUST return an empty array if no results match the query. Implementa
     | :---- | :-------- | :-------- | :------- | :------------- | :---------------------------------------------------------------- |
     | `0`   | `address` | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
     | `1`   | `ticker`  | String    | `No`     | `null`         | Match only assets with this ticker. MUST return only one result.  |
-    | `2`   | `address` | String    | `No`     | `null`         | Match only assets with this address. MUST return only one result. |
-    | `3`   | `chainId` | Number    | `No`     | `1`            | Only match assets with this chain ID.                             |
-    | `4`   | `page`    | Number    | `No`     | `0`            | See [pagination.](#pagination)                                    |
-    | `5`   | `perPage` | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                    |
+    | `2`   | `chainId` | Number    | `No`     | `1`            | Only match assets with this chain ID.                             |
+    | `3`   | `page`    | Number    | `No`     | `0`            | See [pagination.](#pagination)                                    |
+    | `4`   | `perPage` | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                    |
 
 -   **Response fields:**
 
