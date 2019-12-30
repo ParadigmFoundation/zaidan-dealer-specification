@@ -347,23 +347,23 @@ Get records of past trades. This method is [paginated.](#pagination)
 
 If no filter parameters are provided, this method MUST return a paginated array of all past trades.
 
-The specification for this method (and the `Trade` schema) has been designed such that, at minimum, implementations must only associate the quote ID and market ID with a transaction hash.
+The specification for this method (and the `Trade` schema) has been designed such that, at minimum, implementations must only associate the quote ID and market ID with an Ethereum transaction hash.
 
-All other fields can be dynamically populated from 0x event logs based on a known transaction hash.
+All other fields can be dynamically populated from 0x event logs based on a known Ethereum transaction hash.
 
 -   **Request fields:**
 
-    | Index | Name               | JSON Type | Required | Default        | Description                                                      |
-    | :---- | :----------------- | :-------- | :------- | :------------- | :--------------------------------------------------------------- |
-    | `0`   | `quoteId`          | String    | `No`     | `null`         | Match only the trade with this quote ID. MUST match 0 or 1 item. |
-    | `1`   | `marketId`         | String    | `No`     | `null`         | Match only trades for this market ID.                            |
-    | `2`   | `takerAddress`     | String    | `No`     | `null`         | Match only trades filled by this taker address.                  |
-    | `3`   | `transactionHash`  | String    | `No`     | `null`         | Match only the trade with this TX ID. MUST match 0 or 1 item.    |
-    | `4`   | `orderHash`        | String    | `No`     | `null`         | Match only the trade with this order ID. MUST match 0 or 1 item. |
-    | `5`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the maker asset.         |
-    | `6`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the taker asset.         |
-    | `7`   | `page`             | Number    | `No`     | 0              | See [pagination.](#pagination)                                   |
-    | `8`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                   |
+    | Index | Name               | JSON Type | Required | Default        | Description                                                            |
+    | :---- | :----------------- | :-------- | :------- | :------------- | :--------------------------------------------------------------------- |
+    | `0`   | `quoteId`          | String    | `No`     | `null`         | Match only the trade with this quote ID. MUST match 0 or 1 item.       |
+    | `1`   | `marketId`         | String    | `No`     | `null`         | Match only trades for this market ID.                                  |
+    | `2`   | `takerAddress`     | String    | `No`     | `null`         | Match only trades filled by this taker address.                        |
+    | `3`   | `transactionHash`  | String    | `No`     | `null`         | Match only the trade with this Ethereum TX ID. MUST match 0 or 1 item. |
+    | `4`   | `orderHash`        | String    | `No`     | `null`         | Match only the trade with this order ID. MUST match 0 or 1 item.       |
+    | `5`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the maker asset.               |
+    | `6`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the taker asset.               |
+    | `7`   | `page`             | Number    | `No`     | 0              | See [pagination.](#pagination)                                         |
+    | `8`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                         |
 
 -   **Response fields:**
 
@@ -381,8 +381,8 @@ All other fields can be dynamically populated from 0x event logs based on a know
     | `-32603` | Internal error.             | Internal JSON-RPC error. MAY be used as generic internal error code.                 |
     | `-42002` | Invalid filter selection.   | Returned when conflicting or incompatible filters are requested.                     |
     | `-42003` | Invalid address.            | Returned when an invalid Ethereum address is provided.                               |
-    | `-42021` | Invalid transaction ID.     | Available to indicate an invalid transaction hash in a request.                      |
-    | `-42022` | Invalid order hash.         | Available to indicate an order transaction hash in a request.                        |
+    | `-42021` | Invalid transaction ID.     | Available to indicate an invalid Ethereum transaction hash in a request.             |
+    | `-42022` | Invalid order hash.         | Available to indicate an order hash in a request.                                    |
     | `-42023` | Invalid UUID.               | Available to indicate failure to validate a universally unique identifier (UUID).    |
     | `-42024` | Request rate limit reached. | Available to indicate a implementation-specific request rate limit has been reached. |
 
@@ -532,11 +532,11 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
 
 Submit a previously-fetched quote for settlement. Can be thought of as a "request-to-fill" by a trader.
 
-This method MUST support executing the signed fill transaction from the client, according to [ZEIP-18.](https://github.com/0xProject/ZEIPs/issues/18)
+This method MUST support executing the signed 0x fill transaction from the client, according to [ZEIP-18.](https://github.com/0xProject/ZEIPs/issues/18)
 
 Implementations MAY use the `validityParameters` from previously-submitted quotes to reject fills based on external parameters.
 
-The order or fill transaction data SHOULD be stored by implementations and associated with the quote ID so clients need not submit the raw fill transaction or the transaction hash.
+The order or 0x fill transaction data SHOULD be stored by implementations and associated with the quote ID so clients need not submit the raw 0x fill transaction or its hash.
 
 Dealer implementations MAY assume the signer address is equal to the originally-provided `takerAddress` if not provided in the request-to-fill.
 
@@ -547,18 +547,18 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     | Index | Name        | JSON Type | Required | Default | Description                                                                        |
     | :---- | :---------- | :-------- | :------- | :------ | :--------------------------------------------------------------------------------- |
     | `0`   | `quoteId`   | String    | `Yes`    | -       | The ID of the original quote that is being submitted for settlement.               |
-    | `1`   | `salt`      | String    | `Yes`    | -       | The salt used to generate the fill transaction hash and signature.                 |
-    | `2`   | `signature` | String    | `Yes`    | -       | The taker's signature of the fill transaction data.                                |
+    | `1`   | `salt`      | String    | `Yes`    | -       | The salt used to generate the 0x fill transaction hash and signature.              |
+    | `2`   | `signature` | String    | `Yes`    | -       | The taker's signature of the 0x fill transaction data.                             |
     | `3`   | `signer`    | String    | `No`     | -       | The address that signed the fill. SHOULD be omitted (SHOULD match original taker). |
-    | `4`   | `data`      | String    | `No`     | -       | The full fill transaction call data. SHOULD be omitted.                            |
-    | `5`   | `hash`      | String    | `No`     | -       | The salted hash of the fill transaction. SHOULD be omitted.                        |
+    | `4`   | `data`      | String    | `No`     | -       | The full 0x fill transaction call data. SHOULD be omitted                          |
+    | `5`   | `hash`      | String    | `No`     | -       | The salted hash of the 0x fill transaction. SHOULD be omitted.                     |
 
 -   **Response fields:**
 
     | Index | Name              | JSON Type | Schema               | Description                                                            |
     | :---- | :---------------- | :-------- | :------------------- | :--------------------------------------------------------------------- |
     | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement. |
-    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted fill transaction (transaction ID).           |
+    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted 0x fill (Ethereum transaction hash)          |
     | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.              |
     | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.             |
 
@@ -954,6 +954,7 @@ Defines a past (settled) trade from a dealer.
 1. The default value SHOULD be the null address (20 null bytes) represented as a hex string. Implementations MAY require takers to specify a `takerAddress`.
 1. Quotes indicated as `includeOrder` as `false` can be seen as traders checking if a dealer's prices are favorable at a given time for a certain market and trade size.
     - Implementations MAY treat these types of quotes separately in internal tracking and/or pricing mechanisms.
+1. Due to confusion between the word "transaction" referring to either an Ethereum transaction or a 0x ZEIP-18 transaction (`ZeroExTransaction`), wherever the word refers to an Ethereum transaction, it is explicitly stated. Similarly, wherever "transaction" refers to a ZEIP-18 message, it is explicitly described as a "0x transaction" or a "0x fill transaction" (the same goes for transaction hashes).
 
 ### Error codes
 
@@ -985,7 +986,7 @@ A table of all specified error codes, which MAY be used in methods other than wh
 | `-42018` | Insufficient taker balance.         | Available to indicate specific validation failure.                                                |
 | `-42019` | Insufficient taker allowance.       | Available to indicate specific validation failure.                                                |
 | `-42020` | Quote validation failure.           | Available to indicate implementation-specific failures of extra quote data.                       |
-| `-42021` | Invalid transaction ID.             | Available to indicate an invalid transaction hash in a request.                                   |
+| `-42021` | Invalid transaction ID.             | Available to indicate an invalid Ethereum transaction hash in a request.                          |
 | `-42022` | Invalid order hash.                 | Available to indicate an order transaction hash in a request.                                     |
 | `-42023` | Invalid UUID.                       | Available to indicate failure to validate a universally unique identifier (UUID).                 |
 | `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.              |
