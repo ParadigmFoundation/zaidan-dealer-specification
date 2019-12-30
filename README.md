@@ -364,7 +364,7 @@ All other fields can be dynamically populated from 0x event logs based on a know
     | `5`   | `makerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the maker asset.         |
     | `6`   | `takerAssetTicker` | String    | `No`     | `null`         | Match only trades where this ticker was the taker asset.         |
     | `7`   | `page`             | Number    | `No`     | 0              | See [pagination.](#pagination)                                   |
-    | `7`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                   |
+    | `8`   | `perPage`          | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                   |
 
 -   **Response fields:**
 
