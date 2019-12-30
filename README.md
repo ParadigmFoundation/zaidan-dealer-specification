@@ -407,7 +407,25 @@ All other fields can be dynamically populated from 0x event logs based on a know
                 "makerAssetTicker": "WETH",
                 "takerAssetTicker": "DAI",
                 "makerAssetAmount": "883000000000000000",
-                "takerAssetAmount": "143500000000000000000"
+                "takerAssetAmount": "143500000000000000000",
+                "order": {
+                    "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                    "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+                    "feeRecipientAddress": "0x",
+                    "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+                    "makerAssetAmount": "883000000000000000",
+                    "takerAssetAmount": "143500000000000000000",
+                    "makerFee": "0",
+                    "takerFee": "0",
+                    "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+                    "expirationTimeSeconds": "1573790025",
+                    "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+                    "salt": "1572620203025",
+                    "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+                    "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                    "makerFeeAssetData": "0x",
+                    "takerFeeAssetData": "0x"
+                }
             }
         ],
         1,
@@ -671,11 +689,11 @@ The value for `gasPrice` MUST match the value ultimately included in any 0x [fil
 
 -   **Fields**:
 
-    | Name       | Schema | JSON Type | Description                                                                                   |
-    | :--------- | :----- | :-------- | :-------------------------------------------------------------------------------------------- |
-    | `chainId`  | -      | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (MUST match the EIP).                   |
-    | `gasLimit` | -      | String    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.          |
-    | `gasPrice` | -      | String    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer. |
+    | Name       | Schema | JSON Type | Description                                                                                                                               |
+    | :--------- | :----- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+    | `chainId`  | -      | Number    | The [EIP-155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md) chain ID of the active Ethereum network (MUST match the EIP). |
+    | `gasLimit` | -      | String    | The gas limit that will be used in `fillOrder` transactions submitted by the dealer.                                                      |
+    | `gasPrice` | -      | String    | The gas price (in wei) that will be used in `fillOrder` transactions submitted by the dealer.                                             |
 
 -   **JSON Example**:
 
@@ -883,6 +901,7 @@ Defines a past (settled) trade from a dealer.
     | `takerAssetTicker` | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the trade's taker asset.                                |
     | `makerAssetAmount` | -                        | `Yes`    | String    | The amount of the maker asset transacted in the trade.                |
     | `takerAssetAmount` | -                        | `Yes`    | String    | The amount of the taker asset transacted in the trade.                |
+    | `order`            | [Order](#schema-order)   | `Yes`    | Object    | The signed 0x order that was filled in this trade.                    |
 
 -   **JSON Example**:
 
@@ -897,7 +916,25 @@ Defines a past (settled) trade from a dealer.
         "makerAssetTicker": "WETH",
         "takerAssetTicker": "DAI",
         "makerAssetAmount": "883000000000000000",
-        "takerAssetAmount": "143500000000000000000"
+        "takerAssetAmount": "143500000000000000000",
+        "order": {
+            "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
+            "feeRecipientAddress": "0x",
+            "senderAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
+            "makerAssetAmount": "883000000000000000",
+            "takerAssetAmount": "143500000000000000000",
+            "makerFee": "0",
+            "takerFee": "0",
+            "exchangeAddress": "0x080bf510fcbf18b91105470639e9561022937712",
+            "expirationTimeSeconds": "1573790025",
+            "signature": "0x1cc41fd3abd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d2511438fcaac7f812eaa2138b67ef9b201c55d7f7eaa7301c0c8540ca3afbd0eea1202",
+            "salt": "1572620203025",
+            "makerAssetData": "0xf47261b0000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498",
+            "takerAssetData": "0xf47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "makerFeeAssetData": "0x",
+            "takerFeeAssetData": "0x"
+        }
     }
     ```
 
