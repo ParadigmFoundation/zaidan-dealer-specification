@@ -688,7 +688,7 @@ To subscribe to multiple markets with different maker and taker assets, multiple
     | Index | Name   | JSON Type | Schema               | Description                                                                                  |
     | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
     | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | A UUID used to identify this subscription (and used to [cancel](#method-feed_unsubscribe) it). |
-    | `1`   | `snapshot` | Array\<[QuoteStub](#schema-quote-stub)> | A snapshot of all currently active quote stubs that match the subscription filter. |
+    | `1`   | `snapshot` | Array<\Object> |Array\<[QuoteStub](#schema-quote-stub)> | A snapshot of all currently active quote stubs that match the subscription filter. |
 
 -   **Event fields:**
 
