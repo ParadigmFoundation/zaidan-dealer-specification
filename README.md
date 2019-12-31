@@ -125,18 +125,18 @@ Implementations MAY choose what types of markets to support, to replicate more c
 
 Supplemental to the standard quote request mechanism described in this spec (`dealer_getQuote`), implementations MAY also provide a public "quote feed" subscription mechanism. 
 
-A quote feed provides a subscription to "quote stubs" for a given set of markets, where a stub indicates a supported range of size values denominated in either the maker asset, taker asset, or both, and provides a range of prices that may be provided for that stub if a trader requests a full quote. See the [quote stub schema](#schema-quotestub), the [subscription method](#method-feed_subscribe), and [the method used to fetch a quote](#method-feed_getquotefromstub) for a given stub. Quote stubs are updated on a drop and replace basis. 
+A quote feed provides a subscription to "quote stubs" for a given set of markets, where a stub indicates an available quantity of the maker asset, and provides a range of prices between which a quote solicited by the a trader will lie. In other words, each stub represents a soft price commitment to a specific quantity of an asset. See the [quote stub schema](#schema-quotestub), the [subscription method](#method-feed_subscribe), and [the method used to fetch a quote](#method-feed_getquotefromstub) for a given stub. Quote stubs are updated on a drop and replace basis. At a high level, the quote feed can be considered a limit orderbook with soft price bounds.   
 
-Quote feeds provide takers an additional means of gathering price information from a Dealer. Perhaps most notably, the quote feed allows a taker to remain anonymous during the dealer's initial price setting process. More formally, the quote feed provides quote stubs that represent upper and lower cost limits for specific quantities of assets. In the context of an order book, these cost limits could be considered bounded price levels.
+Quote feeds provide takers an additional means of gathering price information from a Dealer. Perhaps most notably, the quote feed allows a taker to remain anonymous during the dealer's initial price setting process. More formally, the quote feed provides quote stubs that represent upper and lower cost limits for a specific quantity of an asset. In the context of an order book, these cost limits could be considered bounded price levels.
 
-When a potential taker fetches a quote corresponding to particular quote stub, they will get an exact cost/price. This value will fall somewhere in the range defined in the quote stub. The value's positioning in the range will depend on a taker's specific relationship to the dealer. This scheme thus also provides takers an additional metric on which to evaluate a dealer.
+When a potential taker fetches a quote corresponding to particular quote stub, they will receive an exact cost/price. This value will fall somewhere in the range defined in the quote stub. The value's positioning in the range will depend on a taker's specific relationship to the dealer. Thus, this scheme also provides takers an additional metric on which to evaluate a dealer.
 
 In addition to providing direct subscription to a quote feed via the [`feed_subscribe`](#method-feed_subscribe), dealers MAY choose to post quote stubs (either all, or a subset) to arbitrary venues. This includes [IPFS](https://ipfs.io/), a conventional DB/REST API, or perhaps eventually, a peer-to-peer liquidity sharing network such as [0x Mesh](https://github.com/0xProject/0x-mesh) (arbitrary messages are not current supported by mesh).
 
 The [quote stub schema](#schema-quotestub) is intended to provide dealers flexibility, allowing those who do not wish to provide arbitrary swap functionality, the ability to instead just support markets with a shared quote currency. The number of quote stubs alive at a current time should be equal to:
 
 ```
-(# of quote stubs) = 2 * (# of price levels per pair) * (# of pairs)
+(# of quote stubs) = 2 * (# of quantity levels per pair) * (# of pairs)
 ```
 
 **Note:** `(# of pairs)` for dealers that support arbitrary swap functionality is equal to `n * (n - 1)` where `n` is the number of supported assets. For dealers that only support markets between unique base assets and a standard quote currency `(# of pairs)` is equal to `n`.
@@ -714,9 +714,7 @@ To subscribe to multiple markets with different maker and taker assets, multiple
                 "lastId": "c45cfe59-df72-410b-a087-cc012d174d3d",
                 "makerAsset": "WETH",
                 "takerAsset": "ZRX",
-                "makerSizeRequest": [1000000000000000, 10000000000000000000],
-                "takerSizeRequest": [500000000000000000, 50000000000000000000000],
-                "makerSizeBand": [1200000000000000, 1800000000000000],
+                "makerSizeLimit": 10000000000000000000,
                 "takerSizeBand": [5300000000000000000000, 6500000000000000000000]
             },
             {
@@ -724,10 +722,8 @@ To subscribe to multiple markets with different maker and taker assets, multiple
                 "lastId": "cba7638e-b27a-46b3-a003-17d823272291",
                 "makerAsset": "WETH",
                 "takerAsset": "DAI",
-                "makerSizeRequest": [1000000000000000, 10000000000000000000],
-                "takerSizeRequest": [10000000000000000, 9500000000000000000000],
-                "makerSizeBand": [120000000000000000000, 135000000000000000000],
-                "takerSizeBand": [7400000000000000, 8300000000000000]
+                "makerSizeLimit": 10000000000000000000,
+                "takerSizeBand": [120000000000000000000, 135000000000000000000],
             }
         ]
     ]
@@ -1118,13 +1114,18 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
 
 ### Schema: `QuoteStub`
 
-Defines a public "quote stub," indicating a price bound for a given maker/taker asset pair that a trader may request a full quote for at a later time (see `dealer_getQuoteFromStub`).
+Defines a public "quote stub," indicating a price bound and quantity limit for a given maker/taker asset pair that a trader may request a full quote for at a later time (see `dealer_getQuoteFromStub`).
+
+@ todo: reconsider this, perhaps create + cancel instead
 
 Stubs are created and updated in a drop-and-replace manner, meaning a new updated stub should reference the one it is replacing, as a convenience to traders.
 
-At least one of either `makerSizeRequest` or `takerSizeRequest` and at least one of either `takerSizeBand` or `makerSizeBand` MUST be included in each stub.
+Either `makerSizeLimit` and `takerSizeBand` or `takerSizeLimit` and `makerSizeBand` MUST be included in each stub.
 
-If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size bands) are included, that indicates the implementation provides quotes where the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work.
+When requesting a quote based on a price stub the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work. Thus, dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset. In the case where a dealer defines the `makerSizeLimit` and the `takerSizeBand`,  taker can infer an approximate minimum available quantity of taker asset for a given stub by using the `makerSizeLimit` and the right price bound defined in `takerSizeBand`.
+
+By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able to choose whether to restrict price levels based on a quantity of either the maker or taker asset. 
+
 
 -   **Fields**:
 
@@ -1134,8 +1135,8 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
     | `lastId` | [UUID](#schema-uuid) | `Yes` | String | The ID of the quote stub being replaced by this one. MUST be `null` if it is the first stub. |
     | `makerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the dealer (maker) in this stub.       |
     | `takerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the trader (taker) in this stub.       |
-    | `makerSizeRequest`   | - | `No` | Array\<Number> | The lower and upper bounds for size requests for this stub, denominated in the maker asset. |
-    | `takerSizeRequest`   | - | `No` | Array\<Number> | The lower and upper bounds for size requests for this stub, denominated in the taker asset. |
+    | `makerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of maker asset at the corresponding price level. |
+    | `takerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of taker asset at the corresponding price level. |
     | `makerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
     | `takerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
 
@@ -1148,10 +1149,8 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
         "lastId": "09aab684-d2f2-4e36-9c9e-e85d66b15389",
         "makerAsset": "WETH",
         "takerAsset": "DAI",
-        "makerSizeRequest": [1000000000000000, 10000000000000000000],
-        "takerSizeRequest": [10000000000000000, 9500000000000000000000],
-        "makerSizeBand": [120000000000000000000, 135000000000000000000],
-        "takerSizeBand": [7400000000000000, 8300000000000000]
+        "makerSizeLimit": 10000000000000000000,
+        "takerSizeBand": [120000000000000000000, 135000000000000000000],
     }
     ```
 
