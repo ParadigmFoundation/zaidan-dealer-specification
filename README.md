@@ -19,7 +19,8 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
 -   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/rfc/rfc2119.txt).
 -   The word "implementation" is used to refer to any system that implements or provides the Dealer JSONRPC.
 -   In accordance with the JSONRPC 2.0 spec, JSON types (String, Number, Object, and Array) are capitalized to differentiate between usage of the word and the JSON type.
--   The syntax "Array\<T>" is used to indicate an Array of type T (for JSON values) or an Array of schema T.
+-   The syntax "Array\<T>" is used to indicate an Array of type T (for JSON values) or an Array of schema T (for custom schemas defined in this document).
+-   The term "dealer" refers to an entity operating a system that implements the Dealer JSONRPC specified in this document.
 
 ## Contents
 
@@ -66,7 +67,7 @@ In addition to notices in each section, each of the following must be true in or
 These requirements are intended to motivate strong guarantees of compatibility between clients and servers and ensure maximum levels of safety for the operators of each: traders and dealers that implement this API.
 
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
--   Implementations MUST implement all public object schematics (see [Schemas](#schemas)).
+-   Implementations MUST implement all public object schematics necessary to complete the public `dealer` methods (see [Schemas](#schemas)).
 -   Implementations MUST use the canonical 0x v3 addresses for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
@@ -125,15 +126,15 @@ Implementations MAY choose what types of markets to support, to replicate more c
 
 Supplemental to the standard quote request mechanism described in this spec (`dealer_getQuote`), implementations MAY also provide a public "quote feed" subscription mechanism. 
 
-A quote feed provides a subscription to "quote stubs" for a given set of markets, where a stub indicates an available quantity of the maker asset, and provides a range of prices between which a quote solicited by the a trader will lie. In other words, each stub represents a soft price commitment to a specific quantity of an asset. See the [quote stub schema](#schema-quotestub), the [subscription method](#method-feed_subscribe), and [the method used to fetch a quote](#method-feed_getquotefromstub) for a given stub. Quote stubs are updated on a drop and replace basis. At a high level, the quote feed can be considered a limit orderbook with soft price bounds.   
+A quote feed provides a subscription to "quote stubs" for a given set of markets, where a stub indicates an available quantity of the maker or taker asset, and provides a range of prices between which a quote solicited by the a trader will lie. In other words, each stub represents a soft price commitment by a dealer implementation to a specific quantity of an asset. See the [quote stub schema](#schema-quotestub), the [subscription method](#method-feed_subscribe), and [the method used to fetch a quote](#method-feed_getquotefromstub) for a given stub. Conceptually, the quote feed can be considered a limit order book with soft price bounds.   
 
-Quote feeds provide takers an additional means of gathering price information from a Dealer. Perhaps most notably, the quote feed allows a taker to remain anonymous during the dealer's initial price setting process. More formally, the quote feed provides quote stubs that represent upper and lower cost limits for a specific quantity of an asset. In the context of an order book, these cost limits could be considered bounded price levels.
+Quote feeds provide takers an additional means for takers to gather price information from a dealer. Notably, the quote feed allows a taker to remain anonymous during the dealer's initial price setting process. More formally, the quote feed provides quote stubs that represent upper and lower cost limits for a specific quantity of an asset. In the context of an order book, these cost limits could be considered bounded price levels.
 
-When a potential taker fetches a quote corresponding to particular quote stub, they will receive an exact cost/price. This value will fall somewhere in the range defined in the quote stub. The value's positioning in the range will depend on a taker's specific relationship to the dealer. Thus, this scheme also provides takers an additional metric on which to evaluate a dealer.
+When a potential taker fetches a quote corresponding to particular quote stub, they will receive an exact cost/price for the trade size specified by the taker (in units of either the maker asset or the taker asset). This value will fall somewhere in the range defined in the quote stub. The value's positioning in the range will depend on a taker's specific relationship to the dealer. Thus, this scheme also provides takers an additional metric on which to evaluate a dealer.
 
 In addition to providing direct subscription to a quote feed via the [`feed_subscribe`](#method-feed_subscribe), dealers MAY choose to post quote stubs (either all, or a subset) to arbitrary venues. This includes [IPFS](https://ipfs.io/), a conventional DB/REST API, or perhaps eventually, a peer-to-peer liquidity sharing network such as [0x Mesh](https://github.com/0xProject/0x-mesh) (arbitrary messages are not current supported by mesh).
-
-The [quote stub schema](#schema-quotestub) is intended to provide dealers flexibility, allowing those who do not wish to provide arbitrary swap functionality, the ability to instead just support markets with a shared quote currency. The number of quote stubs alive at a current time should be equal to:
+ 
+The number of quote stubs alive at a current time SHOULD be equal to:
 
 ```
 (# of quote stubs) = 2 * (# of quantity levels per pair) * (# of pairs)
@@ -652,9 +653,9 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
 
 ### Method: `feed_subscribe`
 
-Allows the caller to subscribe to a feed of quote stubs for a set of maker and taker asset denominated markets for live-updating offers.
+Allows the caller to subscribe to a feed of quote stubs for a set of maker and taker asset denominated markets for live-updating offers in the form of [`QuoteStub`](#schema-quote-stub) and [`StubUpdate`](#schema-stub-update) messages.
 
-If no parameters after are provided, the subscription MUST include quote stubs for all markets that support [quote feeds.](#quote-feeds)
+If no parameters after are provided, the subscription MUST include quote stubs for all markets that support [quote feeds.](#quote-feeds) Upon creation of a new subscription, a snapshot is provided to the subscriber of all active stubs that match their query filter. Subsequent messages sent in the subscription MUST contain only new stubs, and updates to existing stubs (including cancellations).
 
 To subscribe to multiple markets with different maker and taker assets, multiple subscriptions SHOULD be used.
 
@@ -662,21 +663,23 @@ To subscribe to multiple markets with different maker and taker assets, multiple
 
     | Index | Name         | JSON Type | Required | Default | Description                                                 |
     | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
-    | `0`   | `makerAssets` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these maker assets. |
-    | `1`   | `takerAssets` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these taker assets. |
+    | `0`   | `makerAssetTickers` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these maker assets. |
+    | `1`   | `takerAssetTickers` | Array\<String>  | `No`     | `[]`  | Subscribe to stubs from markets with these taker assets. |
 
 -   **Response fields:**
 
     | Index | Name   | JSON Type | Schema               | Description                                                                                  |
     | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
-    | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | A UUID used to identify this subscription (and used to [cancel](#feed_unsubscribe) it). |
+    | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | A UUID used to identify this subscription (and used to [cancel](#method-feed_unsubscribe) it). |
+    | `1`   | `snapshot` | Array\<[QuoteStub](#schema-quote-stub)> | A snapshot of all currently active quote stubs that match the subscription filter. |
 
 -   **Event fields:**
 
     | Index | Name   | JSON Type | Schema               | Description                                                                                  |
     | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
     | `0`   | `subscriptionId` | String    | [UUID](#schema-uuid) | The UUID indicating which subscription this event is from. |
-    | `1`   | `stubs` | Array\<Object> | Array\<[QuoteStub](#schema-quotestub)> | Newly updated quote stubs that match the subscription filters. |
+    | `1`   | `stubs` | Array\<Object> | Array\<[QuoteStub](#schema-quotestub)> | New quote stubs that match the subscription filters. |
+    | `2`   | `updates` | Array\<Object> | Array\<[StubUpdate](#schema-stubupdate)> | Updates to existing quote stubs that match the subscription filters. |
 
 -   **Errors:**
 
@@ -699,7 +702,18 @@ To subscribe to multiple markets with different maker and taker assets, multiple
 
     ```json
     [
-        "426dbcf8-1d84-405c-978f-454beb1566b8"
+        "426dbcf8-1d84-405c-978f-454beb1566b8",
+        [
+            {
+                "stubId": "d7ed72f4-d486-4b04-bed6-d8f78e1936a1",
+                "makerAssetTicker": "DAI",
+                "takerAssetTicker": "WETH",
+                "makerSizeLimit": "14000000000000000000",
+                "takerSizeLimit": null,
+                "makerPriceBand": null,
+                "takerPriceBand": [0.0078, 0.0082]
+            }
+        ]
     ]
     ```
 
@@ -711,19 +725,28 @@ To subscribe to multiple markets with different maker and taker assets, multiple
         [
             {
                 "stubId": "1e342bd7-6dca-4cbe-9a91-7466e595206c",
-                "lastId": "c45cfe59-df72-410b-a087-cc012d174d3d",
-                "makerAsset": "WETH",
-                "takerAsset": "ZRX",
-                "makerSizeLimit": 10000000000000000000,
-                "takerSizeBand": [5300000000000000000000, 6500000000000000000000]
+                "makerAssetTicker": "WETH",
+                "takerAssetTicker": "ZRX",
+                "makerSizeLimit": "10000000000000000000",
+                "takerSizeLimit": null,
+                "makerPriceBand": null,
+                "takerPriceBand": [5310, 5790]
             },
             {
                 "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
-                "lastId": "cba7638e-b27a-46b3-a003-17d823272291",
-                "makerAsset": "WETH",
-                "takerAsset": "DAI",
-                "makerSizeLimit": 10000000000000000000,
-                "takerSizeBand": [120000000000000000000, 135000000000000000000],
+                "makerAssetTicker": "WETH",
+                "takerAssetTicker": "DAI",
+                "makerSizeLimit": "10000000000000000000",
+                "takerSizeLimit": null,
+                "makerPriceBand": null,
+                "takerPriceBand": [120.4, 135],
+            }
+        ],
+        [
+            {
+                "stubId": "d7ed72f4-d486-4b04-bed6-d8f78e1936a1",
+                "makerSizeLimit": "14000000000000000000",
+                "takerSizeLimit": null
             }
         ]
     ]
@@ -733,7 +756,7 @@ To subscribe to multiple markets with different maker and taker assets, multiple
 
 Fetch a full quote and signed 0x order for a given quote stub (see [`feed_subscribe`](#method-feed_subscribe)).
 
-To request a quote from a stub, either the `makerSize` or the `takerSize` MUST be included.
+To request a quote from a stub, either the `makerSize` or the `takerSize` MUST be included. Dealer implementations SHOULD allow traders to request a quote by specifying either the `makerSize` or the `takerSize`, filling in the value omitted in the request to create the price.
 
 -   **Request fields:**
 
@@ -752,7 +775,7 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
     | `0`   | `stubId` | String | [UUID](#schema-uuid) | If valid, the UUID corresponding to the original quote stub. MUST be distinct from the `quoteId` in the quote. |
     | `1`   | `quote`     | Object    | [Quote](#schema-quote)         | A quote (offer) for the specified values from the client matching the original stub. |
     | `2`   | `tradeInfo` | Object    | [TradeInfo](#schema-tradeinfo) | Settlement information (e.g. gas price).                  |
-    | `3`   | `extra`     | Object    | -                              | OPTIONAL extra structured data relevant to this offer.    |
+    | `3`   | `extra`     | Object    | -                              | OPTIONAL implementation-specific extra structured data relevant to this offer.    |
 
 -   **Errors:**
 
@@ -1116,15 +1139,42 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
 
 Defines a public "quote stub," indicating a price bound and quantity limit for a given maker/taker asset pair that a trader may request a full quote for at a later time (see `dealer_getQuoteFromStub`).
 
-@ todo: reconsider this, perhaps create + cancel instead
+Either `makerSizeLimit` and `takerPriceBand` or `takerSizeLimit` and `makerPriceBand` MUST be included in each stub — whichever fields are not present MUST be `null` and dealers MUST NOT include both `makerSizeLimit` and `takerSizeLimit` or both `makerPriceBand` and `takerPriceBand`.
 
-Stubs are created and updated in a drop-and-replace manner, meaning a new updated stub should reference the one it is replacing, as a convenience to traders.
+More formally, the following MUST be true for each stub:
+- If `makerSizeLimit` is defined, `takerPriceBand` MUST be defined and `makerPriceBand` MUST be `null`.
+- If `takerSizeLimit` is defined, `makerPriceBand` MUST be defined and `takerPriceBand` MUST be `null`.
+- If `makerSizeLimit` is defined, `takerSizeLimit` MUST be `null`.
+- If `takerSizeLimit` is defined, `makerSizeLimit` MUST be `null`.
 
-Either `makerSizeLimit` and `takerSizeBand` or `takerSizeLimit` and `makerSizeBand` MUST be included in each stub.
+When requesting a quote based on a price stub the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation MUST fill in the other value, similar to how regular [quotes](#quotes) work. Thus, dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset.
 
-When requesting a quote based on a price stub the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work. Thus, dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset. In the case where a dealer defines the `makerSizeLimit` and the `takerSizeBand`,  taker can infer an approximate minimum available quantity of taker asset for a given stub by using the `makerSizeLimit` and the right price bound defined in `takerSizeBand`.
+By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able to choose whether to restrict price levels based on a quantity of either the maker or taker asset, which is generally useful to simplify internal accounting. For example, consider the following two quote stub:
 
-By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able to choose whether to restrict price levels based on a quantity of either the maker or taker asset. 
+```json
+[
+    {
+        "stubId": "2b769dc1-87f3-4814-a2df-252d514188e8",
+        "makerAssetTicker": "DAI",
+        "takerAssetTicker": "WETH",
+        "makerSizeLimit": null,
+        "takerSizeLimit": "10000000000000000000",
+        "makerPriceBand": [122.5, 124.1],
+        "takerPriceBand": null
+    },
+    {
+        "stubId": "2e58f94f-3e9f-4830-b775-1fd1483a199a",
+        "makerAssetTicker": "WETH",
+        "takerAssetTicker": "DAI",
+        "makerSizeLimit": "10000000000000000000",
+        "takerSizeLimit": null,
+        "makerPriceBand": null,
+        "takerPriceBand": [123.8, 125.2]
+    }
+]
+```
+
+The dealer providing the stubs above has chosen to always represent prices on WETH/DAI markets in terms of the amount of DAI received or provided per unit of WETH. Dealers MAY choose to always represent priced in terms of the maker asset, taker asset, or a common "quote" asset (DAI in the example above).
 
 
 -   **Fields**:
@@ -1132,13 +1182,12 @@ By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able t
     | Name               | Schema                   | Required | JSON Type | Description                                                           |
     | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
     | `stubId`          | [UUID](#schema-uuid)     | `Yes`    | String    | A unique ID for this stub, needed to fetch a corresponding quote.             |
-    | `lastId` | [UUID](#schema-uuid) | `Yes` | String | The ID of the quote stub being replaced by this one. MUST be `null` if it is the first stub. |
-    | `makerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the dealer (maker) in this stub.       |
-    | `takerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the trader (taker) in this stub.       |
-    | `makerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of maker asset at the corresponding price level. |
-    | `takerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of taker asset at the corresponding price level. |
-    | `makerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
-    | `takerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
+    | `makerAssetTicker`         | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the asset being offered by the dealer (maker) in this stub.       |
+    | `takerAssetTicker`         | [Ticker](#schema-ticker) | `Yes`    | String    | The ticker of the asset being offered by the trader (taker) in this stub.       |
+    | `makerSizeLimit`   | - | `No` | String | The maximum available quantity of maker asset at the corresponding price level. |
+    | `takerSizeLimit`   | - | `No` | String | The maximum available quantity of taker asset at the corresponding price level. |
+    | `makerPriceBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
+    | `takerPriceBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
 
 
 -   **JSON Example**:
@@ -1146,11 +1195,39 @@ By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able t
     ```json
     {
         "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
-        "lastId": "09aab684-d2f2-4e36-9c9e-e85d66b15389",
         "makerAsset": "WETH",
         "takerAsset": "DAI",
-        "makerSizeLimit": 10000000000000000000,
-        "takerSizeBand": [120000000000000000000, 135000000000000000000],
+        "makerSizeLimit": "10000000000000000000",
+        "takerSizeLimit": null,
+        "makerPriceBand": null,
+        "takerPriceBand": [120.9, 135.1],
+    }
+    ```
+
+### Schema: `StubUpdate`
+
+Dealers can indicate a change to an existing quote stub’s `makerSizeLimit` or `takerSizeLimit` with `StubUpdate` messages (sent to subscribing traders, or posted to a public venue), which reference the stub’s original ID and a new `makerSizeLimit` or `takerSizeLimit`. 
+
+If the respective value is set to 0, this indicates the stub has been canceled. Dealer’s MUST only provide updates that modify the max size for the maker or taker asset; to change price bounds for a stub, it MUST be cancelled and a new one SHOULD be issued.
+
+Individual stub update messages MUST ONLY specify the `makerSizeLimit` or `takerSizeLimit` (not both), which MUST match the limit used in the original stub. For example, if a quote stub with ID `X` initially specifies a `makerSizeLimit`, updates to that stub MUST ONLY specify updated `makerSizeLimit` values. A stub update with ID `X` that specified a `takerSizeLimit` would be in violation of this specification and MUST NOT occur.
+
+-   **Fields**:
+
+    | Name               | Schema                   | Required | JSON Type | Description                                                           |
+    | :----------------- | :----------------------- | :------- | :-------- | :-------------------------------------------------------------------- |
+    | `stubId`          | [UUID](#schema-uuid)     | `Yes`    | String    | The UUID of the stub that is being updated. |
+    | `makerSizeLimit`   | - | `No` | String | The new size limit for the stub in terms of the maker asset. |
+    | `takerSizeLimit`   | - | `No` | String | The new size limit for the stub in terms of the taker asset. |
+
+
+-   **JSON Example**:
+
+    ```json
+    {
+        "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
+        "makerSizeLimit": "8000000000000000000",
+        "takerSizeLimit": null
     }
     ```
 
