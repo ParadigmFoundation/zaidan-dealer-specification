@@ -715,7 +715,7 @@ To subscribe to multiple markets with different maker and taker assets, multiple
                 "makerAsset": "WETH",
                 "takerAsset": "ZRX",
                 "makerSizeLimit": 10000000000000000000,
-                "takerPriceBand": [5300000000000000000000, 6500000000000000000000]
+                "takerSizeBand": [5300000000000000000000, 6500000000000000000000]
             },
             {
                 "stubId": "3efff541-135a-4be8-9da7-f310d5338b1c",
@@ -1120,11 +1120,12 @@ Defines a public "quote stub," indicating a price bound and quantity limit for a
 
 Stubs are created and updated in a drop-and-replace manner, meaning a new updated stub should reference the one it is replacing, as a convenience to traders.
 
-`makerSizeLimit` and `takerPriceBand` MUST be included in each stub.
+Either `makerSizeLimit` and `takerSizeBand` or `takerSizeLimit` and `makerSizeBand` MUST be included in each stub.
 
-Dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset. A taker can infer the minimum available quantity of taker asset fro a given stub by using the `makerSizeLimit` and the right price bound defined in `takerPriceBand`.
+When requesting a quote based on a price stub the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work. Thus, dealer's MUST service quote requests denominated in a quantity of either the maker or taker asset. In the case where a dealer defines the `makerSizeLimit` and the `takerSizeBand`,  taker can infer an approximate minimum available quantity of taker asset for a given stub by using the `makerSizeLimit` and the right price bound defined in `takerSizeBand`.
 
-If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size bands) are included, that indicates the implementation provides quotes where the trader can denominate the size in either the asset they are sending (the taker asset) or the asset they are receiving (the maker asset). The dealer implementation would fill in the other value, similar to how regular [quotes](#quotes) work.
+By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able to choose whether to restrict price levels based on a quantity of either the maker or taker asset. 
+
 
 -   **Fields**:
 
@@ -1135,7 +1136,9 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
     | `makerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the dealer (maker) in this stub.       |
     | `takerAsset`         | [Ticker](#schema-ticker) | `Yes`    | String    | The asset being offered by the trader (taker) in this stub.       |
     | `makerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of maker asset at the corresponding price level. |
-    | `takerPriceBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
+    | `takerSizeLimit`   | - | `No` | Array\<Number> | The maximum available quantity of taker asset at the corresponding price level. |
+    | `makerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
+    | `takerSizeBand` | - | `No` | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
 
 
 -   **JSON Example**:
@@ -1147,7 +1150,7 @@ If both `makerSizeRequest` and `takerSizeRequest` (and their corresponding size 
         "makerAsset": "WETH",
         "takerAsset": "DAI",
         "makerSizeLimit": 10000000000000000000,
-        "takerPriceBand": [120000000000000000000, 135000000000000000000],
+        "takerSizeBand": [120000000000000000000, 135000000000000000000],
     }
     ```
 
