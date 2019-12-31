@@ -780,8 +780,8 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
     | Index | Name         | JSON Type | Required | Default | Description                                                 |
     | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
     | `0`   | `stubId` | String  | `Yes`     | -  | The ID of the quote stub to get a full quote for.  |
-    | `1`   | `makerSize` | Number | `No` | `null` | If present, the dealer will use `makerSize` as the maker amount, filling in the taker amount. |
-    | `2`   | `takerSize` | Number | `No` | `null` | If present, the dealer will use `takerSize` as the taker amount, filling in the maker amount. |
+    | `1`   | `makerSize` | String | `No` | `null` | If present, the dealer will use `makerSize` as the maker amount, filling in the taker amount. |
+    | `2`   | `takerSize` | String | `No` | `null` | If present, the dealer will use `takerSize` as the taker amount, filling in the maker amount. |
     | `3`   | `takerAddress` | String | `No` | (note 3) | The address of the taker who will fill the quote. MAY be required by some implementations. |
     | `4`   | `extra` | Object | `No` | `null` | OPTIONAL implementation-specific extra data. |
 
@@ -814,7 +814,7 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
     ```json
     [
         "3ff02eda-24e9-4e2c-9384-fcf08873dcc3",
-        135600000000000000000,
+        "135600000000000000000",
         null,
         "0x7df1567399d981562a81596e221d220fefd1ff9b"
     ]
@@ -829,8 +829,8 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
             "quoteId": "bafa9565-598d-413a-80d3-7ec3b7e24a08",
             "makerAssetTicker": "ZRX",
             "takerAssetTicker": "WETH",
-            "makerAssetSize": 135600000000000000000,
-            "takerAssetSize": 180000000000000000,
+            "makerAssetSize": "135600000000000000000",
+            "takerAssetSize": "180000000000000000",
             "expiration": 1573775025,
             "serverTime": 1573775014.2231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
@@ -855,8 +855,8 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
         },
         {
             "networkId": 1,
-            "gasLimit": 210000,
-            "gasPrice": 12000000000
+            "gasLimit": "210000",
+            "gasPrice": "12000000000"
         },
         null
     ]
