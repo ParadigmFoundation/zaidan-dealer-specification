@@ -1110,7 +1110,7 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | `orderHash`          | -                         | `No`     | String    | The 0x-specific order hash, as defined in the [v3 specification](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#hashing-an-order).              |
     | `order`              | [Order](#schema-order)    | `No`     | Object    | The dealer-signed [0x order](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#orders) that corresponds to this offer.                             |
     | `fillTx`             | -                         | `No`     | String    | The raw [0x fill transaction](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md#transactions) data for this quote that the taker may sign (see 6). |
-    | `validityParameters` | Array\<ValidityParameter> | `No`     | Array     | OPTIONAL implementation-specific "soft-cancel" parameters for this offer.                                                                                                                  |
+    | `validityParameters` | Array\<[ValidityParameter](#schema-validityparameter)> | `No`     | Array     | OPTIONAL implementation-specific "soft-cancel" parameters for this offer.                                                                                                                  |
 
 -   **JSON Example**:
 
