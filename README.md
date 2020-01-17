@@ -258,22 +258,21 @@ Implementations MAY return an error (e.g. `-42002`) if conflicting query paramet
 
 -   **Request fields:**
 
-    | Index | Name                | JSON Type | Required | Default        | Description                                                    |
-    | :---- | :------------------ | :-------- | :------- | :------------- | :------------------------------------------------------------- |
-    | `0`   | `makerAssetAddress` | String    | `No`     | `null`         | Match only markets with this maker asset.                      |
-    | `1`   | `takerAssetAddress` | String    | `No`     | `null`         | Match only markets that support this taker asset.              |
-    | `2`   | `marketId`          | String    | `No`     | `null`         | Match only the market with this ID. MUST match 0 or 1 markets. |
-    | `3`   | `page`              | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
-    | `4`   | `perPage`           | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
+    | Index | Name                | JSON Type | Required | Default        | Description                                       |
+    | :---- | :------------------ | :-------- | :------- | :------------- | :------------------------------------------------ |
+    | `0`   | `makerAssetAddress` | String    | `No`     | `null`         | Match only markets with this maker asset.         |
+    | `1`   | `takerAssetAddress` | String    | `No`     | `null`         | Match only markets that support this taker asset. |
+    | `2`   | `page`              | Number    | `No`     | `0`            | See [pagination.](#pagination)                    |
+    | `3`   | `perPage`           | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                    |
 
 -   **Response fields:**
 
-    | Index | Name      | JSON Type | Schema         | Description                                                    |
-    | :---- | :-------- | :-------- | :------------- | :------------------------------------------------------------- |
-    | `0`   | `records` | Array     | Array\<Market> | The array of market results that match the request parameters. |
-    | `1`   | `total`   | Number    | -              | The number of results that matched the request (MAY be 0).     |
-    | `2`   | `page`    | Number    | -              | The page index of the result (MUST match request).             |
-    | `3`   | `perPage` | Number    | -              | The array of asset results that match the request parameters.  |
+    | Index | Name      | JSON Type | Schema                           | Description                                                    |
+    | :---- | :-------- | :-------- | :------------------------------- | :------------------------------------------------------------- |
+    | `0`   | `records` | Array     | Array\<[Market](#schema-market)> | The array of market results that match the request parameters. |
+    | `1`   | `total`   | Number    | -                                | The number of results that matched the request (MAY be 0).     |
+    | `2`   | `page`    | Number    | -                                | The page index of the result (MUST match request).             |
+    | `3`   | `perPage` | Number    | -                                | The array of asset results that match the request parameters.  |
 
 -   **Errors:**
 
@@ -294,7 +293,6 @@ Implementations MAY return an error (e.g. `-42002`) if conflicting query paramet
     [
         [
             {
-                "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
                 "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
                 "takerAssetAddresses": [
                     "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -312,7 +310,6 @@ Implementations MAY return an error (e.g. `-42002`) if conflicting query paramet
                 }
             },
             {
-                "marketId": "87c0ee47-44c0-4ff0-ba68-6638c79c11dd",
                 "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
                 "takerAssetAddresses": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"],
                 "tradeInfo": {
@@ -884,13 +881,10 @@ Defines a market: a trading venue that supports a maker asset (provided by the d
 
 The concept of a base and quote asset are intentionally omitted, and left for definition at higher levels based on the trading and market scenario.
 
-Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as shown in the example are OPTIONAL).
-
 -   **Fields**:
 
     | Name                  | Schema                         | Required | JSON Type     | Description                                                                          |
     | :-------------------- | :----------------------------- | :------- | :------------ | :----------------------------------------------------------------------------------- |
-    | `marketId`            | -                              | Yes      | String        | An implementation-specific market ID string. MUST be unique for each market.         |
     | `makerAssetAddress`   | -                              | `Yes`    | String        | The Ethereum address of the markets maker asset (provided by the dealer).            |
     | `takerAssetAddresses` | -                              | `Yes`    | Array<String> | An array of asset Ethereum addresses for which quotes are supported.                 |
     | `tradeInfo`           | [TradeInfo](#schema-tradeinfo) | `Yes`    | Object        | Information about trade settlement and execution for this market (gas price, etc.).  |
@@ -901,7 +895,6 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
 
     ```json
     {
-        "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
         "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "takerAssetAddresses": [
             "0x6b175474e89094c44da98b954eedeac495271d0f",
