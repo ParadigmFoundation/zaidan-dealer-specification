@@ -1106,34 +1106,34 @@ Individual stub update messages MUST ONLY specify the `makerSizeLimit` or `taker
 
 A table of all specified error codes, which MAY be used in methods other than where they are specified, if applicable.
 
-| Code     | Description                         | Notes                                                                                             |
-| :------- | :---------------------------------- | :------------------------------------------------------------------------------------------------ |
-| `-32700` | Parse error.                        | Invalid JSON was received by the server. MUST be implemented.                                     |
-| `-32600` | Invalid request.                    | The JSON sent is not a valid request object (see JSONRPC spec). MUST be implemented.              |
-| `-32601` | Method not found.                   | The method does not exist or is not available.                                                    |
-| `-32602` | Invalid parameters.                 | Invalid method parameters. MAY be omitted in favor of more specific codes.                        |
-| `-32603` | Internal error.                     | Internal JSON-RPC error. MAY be used as generic internal error code.                              |
-| `-42002` | Invalid filter selection.           | Returned when conflicting or incompatible filters are requested.                                  |
-| `-42003` | Invalid address.                    | Returned when an invalid Ethereum address is provided.                                            |
-| `-42004` | Invalid asset data.                 | Returned when malformed ABIv2 asset data is included in a request.                                |
-| `-42005` | Two size requests.                  | Occurs when a client specifies `makerAssetSize` and `takerAssetSize`.                             |
-| `-42006` | Taker not authorized.               | Occurs when the taker's address is not authorized for trading.                                    |
-| `-42007` | Invalid side.                       | Available for implementations to indicate lack of support for arbitrary swaps.                    |
-| `-42008` | Temporary restriction.              | Available for implementations to indicate taker-specific temporary restrictions.                  |
-| `-42009` | Unsupported market.                 | Occurs when the specified market (quote and base pair) is not supported.                          |
-| `-42010` | Unsupported taker asset for market. | Available for implementations to indicate lack of support for arbitrary swaps.                    |
-| `-42011` | Quote too large.                    | Occurs when a quote would exceed the market maximum or the dealer's balance.                      |
-| `-42012` | Quote too small.                    | Occurs when a quote would be smaller than the market's minimum size.                              |
-| `-42013` | Quote unavailable at this time.     | Reserved for various states where dealers may not be serving quotes.                              |
-| `-42014` | Quote expired.                      | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration. |
-| `-42015` | Unknown quote.                      | Available to allow implementations differentiate expired from never-quoted.                       |
-| `-42016` | Order already filled.               | Available to allow implementations to indicate specific double-fill attempts.                     |
-| `-42017` | Fill validation failed.             | Available to indicate current chain state simulation validation failure.                          |
-| `-42018` | Insufficient taker balance.         | Available to indicate specific validation failure.                                                |
-| `-42019` | Insufficient taker allowance.       | Available to indicate specific validation failure.                                                |
-| `-42020` | Quote validation failure.           | Available to indicate implementation-specific failures of extra quote data.                       |
-| `-42021` | Invalid transaction ID.             | Available to indicate an invalid Ethereum transaction hash in a request.                          |
-| `-42022` | Invalid order hash.                 | Available to indicate an order transaction hash in a request.                                     |
-| `-42023` | Invalid UUID.                       | Available to indicate failure to validate a universally unique identifier (UUID).                 |
-| `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.              |
-| `-42025` | Stub no longer available.           | Available to indicate that a quote stub has expired or is no longer supported for another reason. |
+| Code     | Description                         | Notes                                                                                                   |
+| :------- | :---------------------------------- | :------------------------------------------------------------------------------------------------------ |
+| `-32700` | Parse error.                        | Invalid JSON was received by the server. MUST be implemented.                                           |
+| `-32600` | Invalid request.                    | The JSON sent is not a valid request object (see JSONRPC spec). MUST be implemented.                    |
+| `-32601` | Method not found.                   | The method does not exist or is not available.                                                          |
+| `-32602` | Invalid parameters.                 | Invalid method parameters. MAY be omitted in favor of more specific codes.                              |
+| `-32603` | Internal error.                     | Internal JSON-RPC error. MAY be used as generic internal error code.                                    |
+| `-42002` | Invalid filter selection.           | Returned when conflicting or incompatible filters are requested.                                        |
+| `-42003` | Invalid address.                    | Returned when an invalid Ethereum address is provided.                                                  |
+| `-42004` | Invalid asset.                      | Generic code that MAY be used to indicate unsupported asset, or an address that is not an ERC-20 asset. |
+| `-42005` | Two size requests.                  | Occurs when a client specifies `makerAssetSize` and `takerAssetSize`.                                   |
+| `-42006` | Taker not authorized.               | Occurs when the taker's address is not authorized for trading.                                          |
+| `-42007` | Invalid side.                       | Available for implementations to indicate lack of support for arbitrary swaps.                          |
+| `-42008` | Temporary restriction.              | Available for implementations to indicate taker-specific temporary restrictions.                        |
+| `-42009` | Unsupported market.                 | Occurs when the specified market (quote and base pair) is not supported.                                |
+| `-42010` | Unsupported taker asset for market. | Available for implementations to indicate lack of support for arbitrary swaps.                          |
+| `-42011` | Quote too large.                    | Occurs when a quote would exceed the market maximum or the dealer's balance.                            |
+| `-42012` | Quote too small.                    | Occurs when a quote would be smaller than the market's minimum size.                                    |
+| `-42013` | Quote unavailable at this time.     | Reserved for various states where dealers may not be serving quotes.                                    |
+| `-42014` | Quote expired.                      | MUST be implemented and used ONLY when a request-to-fill is received after the quotes expiration.       |
+| `-42015` | Unknown quote.                      | Available to allow implementations differentiate expired from never-quoted.                             |
+| `-42016` | Order already filled.               | Available to allow implementations to indicate specific double-fill attempts.                           |
+| `-42017` | Fill validation failed.             | Available to indicate current chain state simulation validation failure.                                |
+| `-42018` | Insufficient taker balance.         | Available to indicate specific validation failure.                                                      |
+| `-42019` | Insufficient taker allowance.       | Available to indicate specific validation failure.                                                      |
+| `-42020` | Quote validation failure.           | Available to indicate implementation-specific failures of extra quote data.                             |
+| `-42021` | Invalid transaction ID.             | Available to indicate an invalid Ethereum transaction hash in a request.                                |
+| `-42022` | Invalid order hash.                 | Available to indicate an order transaction hash in a request.                                           |
+| `-42023` | Invalid UUID.                       | Available to indicate failure to validate a universally unique identifier (UUID).                       |
+| `-42024` | Request rate limit reached.         | Available to indicate a implementation-specific request rate limit has been reached.                    |
+| `-42025` | Stub no longer available.           | Available to indicate that a quote stub has expired or is no longer supported for another reason.       |
