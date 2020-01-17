@@ -75,7 +75,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MUST display asset amounts in base units of the corresponding assets; there MUST NOT be decimal asset amounts (see [encoding](#encoding)).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
 -   Implementations MUST encode all values denoting asset amounts as JSON Strings in the public API to preserve precision.
--   Implementations MUST NOT use floating points in the public API, except where denoting units of time.
+-   Implementations MUST NOT use floating points in the public API (including timestamps, which MUST be the integer UNIX time in milliseconds).
 -   Implementations MUST use Arrays for return values and request parameters (in accordance with the JSONRPC specification).
 -   Implementations MAY support batch requests, in accordance with the JSONRPC 2.0 specification.
 -   Implementations MUST use Array for return values and parameters (in accordance with the JSONRPC specification).
@@ -435,7 +435,7 @@ All other fields can be dynamically populated from 0x event logs based on a know
                 "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
                 "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
                 "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-                "timestamp": 1574108114.3301,
+                "timestamp": 1574108114301,
                 "makerAssetTicker": "WETH",
                 "takerAssetTicker": "DAI",
                 "makerAssetAmount": "883000000000000000",
@@ -529,8 +529,8 @@ Clients SHOULD leave at least one size field (either `makerAssetSize` or `takerA
             "takerAssetTicker": "DAI",
             "makerAssetSize": "1435000000000000000",
             "takerAssetSize": "300000000000000000",
-            "expiration": 1573775025,
-            "serverTime": 1573775014.2231,
+            "expiration": 1573775025312,
+            "serverTime": 1573775014231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
             "order": {
                 "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
@@ -587,12 +587,12 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
 
 -   **Response fields:**
 
-    | Index | Name              | JSON Type | Schema               | Description                                                            |
-    | :---- | :---------------- | :-------- | :------------------- | :--------------------------------------------------------------------- |
-    | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement. |
-    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted 0x fill (Ethereum transaction hash)          |
-    | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp the fill transaction was submitted at.              |
-    | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.             |
+    | Index | Name              | JSON Type | Schema               | Description                                                                 |
+    | :---- | :---------------- | :-------- | :------------------- | :-------------------------------------------------------------------------- |
+    | `0`   | `quoteId`         | String    | [UUID](#schema-uuid) | The UUID of the original quote that has been submitted for settlement.      |
+    | `1`   | `transactionHash` | String    | -                    | The hash of the submitted 0x fill (Ethereum transaction hash)               |
+    | `2`   | `submittedAt`     | Number    | [Time](#schema-time) | The UNIX timestamp (in milliseconds) the fill transaction was submitted at. |
+    | `3`   | `extra`           | Object    | -                    | OPTIONAL implementation-specific relevant structured data.                  |
 
 -   **Errors:**
 
@@ -624,28 +624,28 @@ Implementations SHOULD strive to ONLY require the first three parameters for fil
     [
         "bafa9565-598d-413a-80d3-7ec3b7e24a08",
         "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
-        1574108114.3301
+        1574108114301
     ]
     ```
 
 ### Method: `dealer_time`
 
-Fetch the current time from the dealer server.
+Fetch the current time from the dealer server as a UNIX timestamp (in milliseconds).
 
 Optionally provide a time in the request (`clientTime`) to get the difference (useful for clock synchronization and estimating network latency).
 
 -   **Request fields:**
 
-    | Index | Name         | JSON Type | Required | Default | Description                                                 |
-    | :---- | :----------- | :-------- | :------- | :------ | :---------------------------------------------------------- |
-    | `0`   | `clientTime` | Number    | `No`     | `null`  | A timestamp from the client to get a difference in seconds. |
+    | Index | Name         | JSON Type | Required | Default | Description                                                           |
+    | :---- | :----------- | :-------- | :------- | :------ | :-------------------------------------------------------------------- |
+    | `0`   | `clientTime` | Number    | `No`     | `null`  | A UNIX timestamp from the client to get a difference in milliseconds. |
 
 -   **Response fields:**
 
-    | Index | Name   | JSON Type | Schema               | Description                                                                                  |
-    | :---- | :----- | :-------- | :------------------- | :------------------------------------------------------------------------------------------- |
-    | `0`   | `time` | Number    | [Time](#schema-time) | The UNIX timestamp of the dealer's clock at the time of request.                             |
-    | `1`   | `diff` | Number    | -                    | The difference between the dealer time and the client time. ONLY if `clientTime` in request. |
+    | Index | Name   | JSON Type | Schema               | Description                                                                                                  |
+    | :---- | :----- | :-------- | :------------------- | :----------------------------------------------------------------------------------------------------------- |
+    | `0`   | `time` | Number    | [Time](#schema-time) | The UNIX timestamp of the dealer's clock at the time of request.                                             |
+    | `1`   | `diff` | Number    | -                    | The difference between the dealer time and the client time in milliseconds. ONLY if `clientTime` in request. |
 
 -   **Errors:**
 
@@ -657,13 +657,13 @@ Optionally provide a time in the request (`clientTime`) to get the difference (u
 -   **Example request body:**
 
     ```json
-    [1574108764.1019]
+    [1574108764019]
     ```
 
 -   **Example response body:**
 
     ```json
-    [1574108764.2118, 0.1099]
+    [1574108764218, 1099]
     ```
 
 ## Feed methods
@@ -828,8 +828,8 @@ To request a quote from a stub, either the `makerSize` or the `takerSize` MUST b
             "takerAssetTicker": "WETH",
             "makerAssetSize": "135600000000000000000",
             "takerAssetSize": "180000000000000000",
-            "expiration": 1573775025,
-            "serverTime": 1573775014.2231,
+            "expiration": 1573775025132,
+            "serverTime": 1573775014231,
             "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
             "order": {
                 "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
@@ -918,16 +918,16 @@ This value SHOULD come from the [ERC-20 `symbol`](https://github.com/ethereum/EI
 
 ### Schema: `Time`
 
-All times are specified in seconds since the UNIX epoch as a Number.
+All times are specified in milliseconds since the UNIX epoch as an integer Number.
 
-Implementations MAY choose the level of time precision (decimals), which MUST be consistent across the public API.
+Implementations MUST represent timestamps as whole integer numbers of milliseconds, without further decimal precision.
 
-If an implementation provides sub-second precision for timing, the decimal place and trailing zeros MAY be omitted if applicable.
+**Note:** the one exception is the `expirationTimeSeconds` field in [0x orders](#schema-order) which are UNIX seconds and represented as a String.
 
 -   **JSON Example:**
 
     ```json
-    1573774183.1353
+    1573774183353
     ```
 
 ### Schema: `UUID`
@@ -1113,8 +1113,8 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
         "takerAssetTicker": "WETH",
         "makerAssetSize": "100000000000000000000",
         "takerAssetSize": "300000000000000000",
-        "expiration": 1573775025,
-        "serverTime": 1573775014.2231,
+        "expiration": 1573775025112,
+        "serverTime": 1573775014231,
         "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
         "order": {
             "makerAddress": "0xcefc94f1c0a0be7ad47c7fd961197738fc233459",
@@ -1266,7 +1266,7 @@ Defines a past (settled) trade from a dealer.
         "orderHash": "0x0aeea0263e2c41f1c525210673f30768a4f8f280b2d35ffe776d548ea5004375",
         "transactionHash": "0x6100529dedbf80435ba0896f3b1d96c441690c7e3c7f7be255aa7f6ee8a07b65",
         "takerAddress": "0x7df1567399d981562a81596e221d220fefd1ff9b",
-        "timestamp": 1574108114.3301,
+        "timestamp": 1574108114301,
         "makerAssetTicker": "WETH",
         "takerAssetTicker": "DAI",
         "makerAssetAmount": "883000000000000000",
