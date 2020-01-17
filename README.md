@@ -71,7 +71,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MUST use the [canonical 0x v3 addresses](https://github.com/0xProject/0x-monorepo/blob/development/packages/contract-addresses/addresses.json) for the active Ethereum network.
 -   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
--   All supported assets MUST each have a unique string identifier called a "ticker" (e.g. DAI, ZRX, WETH).
+-   Implementations MUST only reference assets by their ERC-20 contract's deployed address on the active Ethereum network.
 -   Implementations MUST display asset amounts in base units of the corresponding assets; there MUST NOT be decimal asset amounts (see [encoding](#encoding)).
 -   Implementations MUST use arbitrary precision (or sufficiently precise fixed-precision) representations for integers.
 -   Implementations MUST encode all values denoting asset amounts as JSON Strings in the public API to preserve precision.
@@ -101,14 +101,20 @@ traders are able to specify the `makerAsset`, `takerAsset`, and one of either `m
 
 Because there is no concept of a base or quote asset, quotes include no notion of price. Instead allowing clients to calculate the price in terms of either asset.
 
-Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. Consider the following requests (syntax: `[ MAKER_ASSET, TAKER_ASSET, MAKER_SIZE, TAKER_SIZE ]`).
+Implementations MAY choose what types of markets to support, to replicate more conventional trading systems. 
+
+In the example below, the mainnet (chain ID 1) address for the following assets are used:
+- DAI Stablecoin (DAI): `0x6b175474e89094c44da98b954eedeac495271d0f`
+- 0x Protocol Token (ZRX): `0xe41d2489571d322189246dafa5ebde1f4699f498`
+
+Consider the following requests (syntax: `[ MAKER_ASSET, TAKER_ASSET, MAKER_SIZE, TAKER_SIZE ]`).
 
 ```json
 [
-    ["DAI", "ZRX", null, "100000000000000000000"],
-    ["ZRX", "DAI", "100000000000000000000", null],
-    ["ZRX", "DAI", null, "10000000000000000000"],
-    ["DAI", "ZRX", "10000000000000000000", null]
+    ["0x6b175474e89094c44da98b954eedeac495271d0f", "0xe41d2489571d322189246dafa5ebde1f4699f498", null, "100000000000000000000"],
+    ["0xe41d2489571d322189246dafa5ebde1f4699f498", "0x6b175474e89094c44da98b954eedeac495271d0f", "100000000000000000000", null],
+    ["0xe41d2489571d322189246dafa5ebde1f4699f498", "0x6b175474e89094c44da98b954eedeac495271d0f", null, "10000000000000000000"],
+    ["0x6b175474e89094c44da98b954eedeac495271d0f", "0xe41d2489571d322189246dafa5ebde1f4699f498", "10000000000000000000", null]
 ]
 ```
 
@@ -340,8 +346,12 @@ This method MUST return an empty array if no results match the query. Implementa
         [
             {
                 "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-                "makerAssetTicker": "WETH",
-                "takerAssetTickers": ["DAI", "MKR", "ZRX"],
+                "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "takerAssetAddresses": [
+                    "0x6b175474e89094c44da98b954eedeac495271d0f",
+                    "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+                    "0xe41d2489571d322189246dafa5ebde1f4699f498"
+                ],
                 "tradeInfo": {
                     "chainId": 1,
                     "gasLimit": "210000",
@@ -354,8 +364,8 @@ This method MUST return an empty array if no results match the query. Implementa
             },
             {
                 "marketId": "87c0ee47-44c0-4ff0-ba68-6638c79c11dd",
-                "makerAssetTicker": "WETH",
-                "takerAssetTickers": ["USDC"],
+                "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "takerAssetAddresses": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"],
                 "tradeInfo": {
                     "chainId": 1,
                     "gasLimit": "210000",
