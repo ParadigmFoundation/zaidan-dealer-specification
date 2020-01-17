@@ -41,7 +41,6 @@ Be sure to see important notes and resources in [the appendix.](#appendix)
     -   [GetQuoteFromStub](#method-feed_getquotefromstub)
     -   [Unsubscribe](#method-feed_unsubscribe)
 -   [Schemas](#schemas)
-    -   [Ticker](#schema-ticker)
     -   [Time](#schema-time)
     -   [UUID](#schema-uuid)
     -   [TradeInfo](#schema-tradeinfo)
@@ -261,7 +260,7 @@ Implementations MAY return an error (e.g. `-42002`) if conflicting query paramet
     | Index | Name                | JSON Type | Required | Default        | Description                                                    |
     | :---- | :------------------ | :-------- | :------- | :------------- | :------------------------------------------------------------- |
     | `0`   | `makerAssetAddress` | String    | `No`     | `null`         | Match only markets with this maker asset.                      |
-    | `1`   | `takerAssetAddress` | String    | `No`     | `null`         | Match only markets that support this taker asset ticker.       |
+    | `1`   | `takerAssetAddress` | String    | `No`     | `null`         | Match only markets that support this taker asset.              |
     | `2`   | `marketId`          | String    | `No`     | `null`         | Match only the market with this ID. MUST match 0 or 1 markets. |
     | `3`   | `page`              | Number    | `No`     | `0`            | See [pagination.](#pagination)                                 |
     | `4`   | `perPage`           | Number    | `No`     | Impl. specific | See [pagination.](#pagination)                                 |
@@ -888,22 +887,27 @@ Implementations MAY choose an arbitrary format for the `marketId` (UUIDs as show
 
 -   **Fields**:
 
-    | Name                | Schema                           | Required | JSON Type | Description                                                                          |
-    | :------------------ | :------------------------------- | :------- | :-------- | :----------------------------------------------------------------------------------- |
-    | `marketId`          | -                                | Yes      | String    | An implementation-specific market ID string. MUST be unique for each market.         |
-    | `makerAssetTicker`  | [Ticker](#schema-ticker)         | `Yes`    | String    | The shorthand ticker of the markets maker asset (provided by the dealer).            |
-    | `takerAssetTickers` | Array\<[Ticker](#schema-ticker)> | `Yes`    | Array     | An array of shorthand tickers for which quotes are supported.                        |
-    | `tradeInfo`         | [TradeInfo](#schema-tradeinfo)   | `Yes`    | Object    | Information about trade settlement and execution for this market (gas price, etc.).  |
-    | `quoteInfo`         | [QuoteInfo](#schema-quoteinfo)   | `Yes`    | Object    | Information about quotes provided on this market (max/min size, etc.).               |
-    | `metadata`          | -                                | `No`     | Object    | Optional and implementation-specific key-value pairs for additional market metadata. |
+    | Name                  | Schema                         | Required | JSON Type     | Description                                                                          |
+    | :-------------------- | :----------------------------- | :------- | :------------ | :----------------------------------------------------------------------------------- |
+    | `marketId`            | -                              | Yes      | String        | An implementation-specific market ID string. MUST be unique for each market.         |
+    | `makerAssetAddress`   | -                              | `Yes`    | String        | The Ethereum address of the markets maker asset (provided by the dealer).            |
+    | `takerAssetAddresses` | -                              | `Yes`    | Array<String> | An array of asset Ethereum addresses for which quotes are supported.                 |
+    | `tradeInfo`           | [TradeInfo](#schema-tradeinfo) | `Yes`    | Object        | Information about trade settlement and execution for this market (gas price, etc.).  |
+    | `quoteInfo`           | [QuoteInfo](#schema-quoteinfo) | `Yes`    | Object        | Information about quotes provided on this market (max/min size, etc.).               |
+    | `metadata`            | -                              | `No`     | Object        | Optional and implementation-specific key-value pairs for additional market metadata. |
 
 -   **JSON Example**:
 
     ```json
     {
         "marketId": "16b59ee0-7e01-4994-9abe-0561aac8ad7c",
-        "makerAssetTicker": "WETH",
-        "takerAssetTickers": ["DAI", "USDC", "MKR", "ZRX"],
+        "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "takerAssetAddresses": [
+            "0x6b175474e89094c44da98b954eedeac495271d0f",
+            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+            "0xe41d2489571d322189246dafa5ebde1f4699f498"
+        ],
         "tradeInfo": {
             "chainId": 1,
             "gasLimit": "210000",
@@ -934,8 +938,8 @@ Implementations MAY use the `validityParameters` field to specify custom "soft c
     | Name                 | Schema                                                 | Required | JSON Type | Description                                                                                                                                                                                |
     | :------------------- | :----------------------------------------------------- | :------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
     | `quoteId`            | [UUID](#schema-uuid)                                   | `Yes`    | String    | A UUID (v4) that MUST correspond to this offer only.                                                                                                                                       |
-    | `makerAssetAddress`   | -                              | `Yes`    | String    | Ethereum address of the quote's maker asset ERC-20 contract (see [quotes](#quotes)).                                                                                                                       |
-    | `takerAssetAddress`   | -                              | `Yes`    | String    | Ethereum address of the quote's taker asset ERC-20 contract (see [quotes](#quotes)).                                                                                                                       |
+    | `makerAssetAddress`  | -                                                      | `Yes`    | String    | Ethereum address of the quote's maker asset ERC-20 contract (see [quotes](#quotes)).                                                                                                       |
+    | `takerAssetAddress`  | -                                                      | `Yes`    | String    | Ethereum address of the quote's taker asset ERC-20 contract (see [quotes](#quotes)).                                                                                                       |
     | `makerAssetSize`     | -                                                      | `Yes`    | String    | The quote's maker asset size provided by the dealer (see [quotes](#quotes)).                                                                                                               |
     | `takerAssetSize`     | -                                                      | `Yes`    | String    | The quote's taker asset size required by the client (see [quotes](#quotes)).                                                                                                               |
     | `expiration`         | [Time](#schema-time)                                   | `Yes`    | Number    | The UNIX timestamp after which requests to fill this quote will be rejected.                                                                                                               |
@@ -997,8 +1001,8 @@ By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able t
 [
     {
         "stubId": "2b769dc1-87f3-4814-a2df-252d514188e8",
-        "makerAssetTicker": "DAI",
-        "takerAssetTicker": "WETH",
+        "makerAssetAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "takerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "makerSizeLimit": null,
         "takerSizeLimit": "10000000000000000000",
         "makerPriceBand": [122.5, 124.1],
@@ -1006,8 +1010,8 @@ By using either the `makerSizeLimit` or the `takerSizeLimit`, dealers are able t
     },
     {
         "stubId": "2e58f94f-3e9f-4830-b775-1fd1483a199a",
-        "makerAssetTicker": "WETH",
-        "takerAssetTicker": "DAI",
+        "makerAssetAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "takerAssetAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
         "makerSizeLimit": "10000000000000000000",
         "takerSizeLimit": null,
         "makerPriceBand": null,
@@ -1029,15 +1033,15 @@ The dealer providing the stubs above has chosen to always represent prices on WE
 
 -   **Fields**:
 
-    | Name               | Schema                   | Required | JSON Type      | Description                                                                                            |
-    | :----------------- | :----------------------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------- |
-    | `stubId`           | [UUID](#schema-uuid)     | `Yes`    | String         | A unique ID for this stub, needed to fetch a corresponding quote.                                      |
-    | `makerAssetAddress` | - | `Yes`    | String         | The Ethereum address of the asset being offered by the dealer (maker) in this stub.                              |
-    | `takerAssetAddress` | - | `Yes`    | String         | The Ethereum address of the asset being offered by the trader (taker) in this stub.                              |
-    | `makerSizeLimit`   | -                        | `No`     | String         | The maximum available quantity of maker asset at the corresponding price level.                        |
-    | `takerSizeLimit`   | -                        | `No`     | String         | The maximum available quantity of taker asset at the corresponding price level.                        |
-    | `makerPriceBand`   | -                        | `No`     | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
-    | `takerPriceBand`   | -                        | `No`     | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
+    | Name                | Schema               | Required | JSON Type      | Description                                                                                            |
+    | :------------------ | :------------------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------- |
+    | `stubId`            | [UUID](#schema-uuid) | `Yes`    | String         | A unique ID for this stub, needed to fetch a corresponding quote.                                      |
+    | `makerAssetAddress` | -                    | `Yes`    | String         | The Ethereum address of the asset being offered by the dealer (maker) in this stub.                    |
+    | `takerAssetAddress` | -                    | `Yes`    | String         | The Ethereum address of the asset being offered by the trader (taker) in this stub.                    |
+    | `makerSizeLimit`    | -                    | `No`     | String         | The maximum available quantity of maker asset at the corresponding price level.                        |
+    | `takerSizeLimit`    | -                    | `No`     | String         | The maximum available quantity of taker asset at the corresponding price level.                        |
+    | `makerPriceBand`    | -                    | `No`     | Array\<Number> | The lower and upper bounds for the amount of the maker asset offered for each unit of the taker asset. |
+    | `takerPriceBand`    | -                    | `No`     | Array\<Number> | The lower and upper bounds for the amount of the taker asset offered for each unit of the maker asset. |
 
 *   **JSON Example**:
 
@@ -1086,7 +1090,7 @@ Individual stub update messages MUST ONLY specify the `makerSizeLimit` or `taker
 -   [JSONRPC 2.0 Specification](https://www.jsonrpc.org/specification)
 -   [0x Protocol Specification (v3)](https://github.com/0xProject/0x-protocol-specification/blob/master/v3/v3-specification.md)
 -   [0x Improvement Proposal (ZEIP) 18](https://github.com/0xProject/ZEIPs/issues/18)
--   [EIP-20 (ERC-20 specification)](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md#symbol)
+-   [EIP-20 (ERC-20 specification)](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)
 
 ### Notes
 
