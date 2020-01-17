@@ -64,7 +64,7 @@ These requirements are intended to motivate strong guarantees of compatibility b
 -   Implementations MUST implement all methods under the `dealer` namespace (see [Methods](#methods)).
 -   Implementations MUST implement all public object schematics necessary to complete the public `dealer` methods (see [Schemas](#schemas)).
 -   Implementations MUST use the [canonical 0x v3 addresses](https://github.com/0xProject/0x-monorepo/blob/development/packages/contract-addresses/addresses.json) for the active Ethereum network.
--   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPS/ZEIP-18.md).
+-   Implementations MUST support asset settlement according to relevant sections in this document and [ZEIP-18](https://github.com/0xProject/ZEIPs/blob/master/ZEIPs/ZEIP-18.md).
 -   Implementations MUST only support ERC-20 assets (subject to change in future major API versions).
 -   Implementations MUST only reference assets by their ERC-20 contract's deployed address on the active Ethereum network.
 -   Implementations MUST display asset amounts in base units of the corresponding assets; there MUST NOT be decimal asset amounts (see [encoding](#encoding)).
