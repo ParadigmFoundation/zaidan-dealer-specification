@@ -442,15 +442,15 @@ The order or 0x fill transaction data, associated hash, and the original quote/o
 
 -   **Request fields:**
 
-    | Index | Name        | JSON Type | Required | Default | Description                                                            |
-    | :---- | :---------- | :-------- | :------- | :------ | :--------------------------------------------------------------------- |
-    | `0`   | `quoteId`   | String    | `Yes`    | -       | The ID of the original quote that is being submitted for settlement.   |
-    | `1`   | `salt`      | String    | `Yes`    | -       | The salt used to generate the 0x fill transaction hash and signature.  |
-    | `2`   | `signature` | String    | `Yes`    | -       | The taker's signature of the 0x fill transaction data.                 |
-    | `3`   | `signer`    | String    | `Yes`    | -       | The address that signed the fill. SHOULD match original taker.         |
-    | `4`   | `data`      | String    | `Yes`    | -       | The full 0x fill transaction call data.                                |
-    | `5`   | `hash`      | String    | `Yes`    | -       | The salted hash of the 0x fill transaction that was signed.            |
-    | `6`   | `gasPrice`  | String    | `Yes`    | -       | The gas price originally specified in the original quote (MUST match). |
+    | Index | Name                    | JSON Type | Required | Default | Description                                                                 |
+    | :---- | :---------------------- | :-------- | :------- | :------ | :-------------------------------------------------------------------------- |
+    | `0`   | `quoteId`               | String    | `Yes`    | -       | The ID of the original quote that is being submitted for settlement.        |
+    | `1`   | `salt`                  | String    | `Yes`    | -       | The salt used to generate the 0x fill transaction hash and signature.       |
+    | `2`   | `signature`             | String    | `Yes`    | -       | The taker's signature of the 0x fill transaction data.                      |
+    | `3`   | `signer`                | String    | `Yes`    | -       | The address that signed the fill. SHOULD match original taker.              |
+    | `4`   | `data`                  | String    | `Yes`    | -       | The full 0x fill transaction call data.                                     |
+    | `5`   | `gasPrice`              | String    | `Yes`    | -       | The gas price originally specified in the original quote (MUST match).      |
+    | `6`   | `expirationTimeSeconds` | Number    | `Yes`    | -       | The expiration time of the 0x transaction (SHOULD match that of the order). |
 
 -   **Response fields:**
 
@@ -484,8 +484,8 @@ The order or 0x fill transaction data, associated hash, and the original quote/o
         "0xd90ade56ae73626247516dfaa2ab8813a7938c20504376a3e52d25114367ef9b201c55d7f7eaa7301c0c8540ca3afbd02",
         "0x7df1567399d981562a81596e221d220fefd1ff9b",
         "0x9b44d5560000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000002ee5547f0900000000000000000000000000000000000000000000000000000000000000000320000000000000000000000000533014661bfcaf6f0431b2e406dc6590f02ad61d0000000000000000000000008c9ce34862490e3553f7743f308c28b3714a9b0a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000533014661bfcaf6f0431b2e406dc6590f02ad61d00000000000000000000000000000000000000000000000017e18dacf40de0e4000000000000000000000000000000000000000000000000002ee5547f09000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005e2210dd487e984026bcacc3f16dfe4006d0a6005e9c14f7a56a2db1ad4fff5c852e873000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000220000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000024f47261b00000000000000000000000006b175474e89094c44da98b954eedeac495271d0f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024f47261b0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000421b23fd730519e9fd76a16302e5b71f0183187917f1cea4418852e8647b52de2e1360a212883c978c62bae031f6209b4f059a6b4609b8e64aa5ed31a4110163345d03000000000000000000000000000000000000000000000000000000000000",
-        "0x558e9ce660003681cd12e2c00ce1c92cbd8ac3d0f2db118fd1d0bf8278dc2949",
-        "12000000000"
+        "12000000000",
+        1579704960
     ]
     ```
 
